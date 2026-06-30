@@ -32,7 +32,7 @@ class WallTest {
   @Test
   @DisplayName("never splits a multi-byte character across chunks")
   void multiByteSafe() {
-    String message = "e".repeat(63) + "€€"; // 63 ASCII + two 3-byte euro signs
+    String message = "e".repeat(63) + "\u20AC\u20AC"; // 63 ASCII + two 3-byte chars (U+20AC, euro)
     List<String> chunks = Wall.chunk(message);
     for (String c : chunks) {
       assertThat(c.getBytes(StandardCharsets.UTF_8).length).isLessThanOrEqualTo(64);

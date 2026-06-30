@@ -1,7 +1,7 @@
 plugins {
     `java-library`
+    application // `./gradlew run` starts the Spring Boot backend
     id("com.diffplug.spotless") version "6.25.0"
-    // The Spring Boot backend (API that builds the post tx + serves the feed) is added in Ch 03.
 }
 
 repositories {
@@ -13,14 +13,14 @@ java {
 }
 
 dependencies {
+    // Spring Boot backend (BOM-managed; web + test starters only).
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.4.13"))
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+
     // Cardano: build/submit transactions, read metadata, talk to a Blockfrost-compatible backend.
     implementation("com.bloxbean.cardano:cardano-client-lib:0.7.2")
     implementation("com.bloxbean.cardano:cardano-client-backend-blockfrost:0.7.2")
-
-    testImplementation(platform("org.junit:junit-bom:5.11.3"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.assertj:assertj-core:3.26.3")
 }
 
 tasks.withType<JavaCompile>().configureEach { options.compilerArgs.add("-parameters") }
@@ -43,4 +43,8 @@ spotless {
         googleJavaFormat("1.22.0")
         target("src/**/*.java")
     }
+}
+
+application {
+    mainClass.set("org.wall.WallApplication")
 }

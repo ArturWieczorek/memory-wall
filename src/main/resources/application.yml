@@ -1,0 +1,6 @@
+wall:
+  # Cardano backend (Yaci DevKit's Blockfrost-compatible API by default; a preprod/preview URL later).
+  backend-url: ${WALL_BACKEND_URL:http://localhost:8080/api/v1/}
+
+server:
+  port: ${WALL_PORT:8090}
