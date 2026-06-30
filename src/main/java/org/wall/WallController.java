@@ -25,10 +25,13 @@ public class WallController {
 
   private final FeedReader feedReader;
   private final PostTxBuilder txBuilder;
+  private final SubmitService submitService;
 
-  public WallController(FeedReader feedReader, PostTxBuilder txBuilder) {
+  public WallController(
+      FeedReader feedReader, PostTxBuilder txBuilder, SubmitService submitService) {
     this.feedReader = feedReader;
     this.txBuilder = txBuilder;
+    this.submitService = submitService;
   }
 
   @GetMapping("/feed")
@@ -53,5 +56,21 @@ public class WallController {
     String author = req.author() == null ? "" : req.author();
     WallPost post = WallPost.create(author, req.message(), Instant.now());
     return ResponseEntity.ok(new BuildResponse(txBuilder.buildUnsignedHex(req.address(), post)));
+  }
+
+  /** The signed-witness round-trip: the wallet returns a witness; we attach it and submit. */
+  public record SubmitRequest(String txCbor, String witness) {}
+
+  public record SubmitResponse(String txHash) {}
+
+  @PostMapping("/posts/submit")
+  public ResponseEntity<?> submit(@RequestBody SubmitRequest req) {
+    if (req.txCbor() == null
+        || req.txCbor().isBlank()
+        || req.witness() == null
+        || req.witness().isBlank()) {
+      return ResponseEntity.badRequest().body("txCbor and witness are required");
+    }
+    return ResponseEntity.ok(new SubmitResponse(submitService.submit(req.txCbor(), req.witness())));
   }
 }

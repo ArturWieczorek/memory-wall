@@ -1,10 +1,12 @@
 package org.wall;
 
+import com.bloxbean.cardano.client.address.Address;
 import com.bloxbean.cardano.client.api.model.Amount;
 import com.bloxbean.cardano.client.backend.api.BackendService;
 import com.bloxbean.cardano.client.quicktx.QuickTxBuilder;
 import com.bloxbean.cardano.client.quicktx.Tx;
 import com.bloxbean.cardano.client.transaction.spec.Transaction;
+import com.bloxbean.cardano.client.util.HexUtil;
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,18 +24,31 @@ public class PostTxBuilder {
     this.backend = backend;
   }
 
-  /** Build the unsigned post transaction for {@code senderAddress}; returns its CBOR hex. */
+  /**
+   * Build the unsigned post transaction for {@code senderAddress}; returns its CBOR hex. The
+   * address may be bech32 ({@code addr...}) or the hex form a CIP-30 wallet returns - we normalise
+   * it.
+   */
   public String buildUnsignedHex(String senderAddress, WallPost post) {
+    String bech32 = toBech32(senderAddress);
     Tx tx =
         new Tx()
-            .payToAddress(senderAddress, Amount.ada(1))
+            .payToAddress(bech32, Amount.ada(1))
             .attachMetadata(Wall.postMetadata(post))
-            .from(senderAddress);
+            .from(bech32);
     try {
       Transaction unsigned = new QuickTxBuilder(backend).compose(tx).build();
       return unsigned.serializeToHex();
     } catch (Exception e) {
       throw new IllegalStateException("failed to build post transaction", e);
     }
+  }
+
+  /** A CIP-30 wallet returns addresses as hex; convert to the bech32 form bloxbean expects. */
+  private static String toBech32(String address) {
+    if (address.startsWith("addr")) {
+      return address;
+    }
+    return new Address(HexUtil.decodeHexString(address)).toBech32();
   }
 }
