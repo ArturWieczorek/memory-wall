@@ -3,16 +3,15 @@
 > Update at the end of every work session. Read `CLAUDE.md` first.
 
 ## Current state
-- Status: started. Scaffold + Ch 00/01 done (web-UI architecture; metadata-based post core). 8 tests green.
-- Current chapter: Next up Ch 02 (read the feed).
+- Status: COMPLETE. Ch 00-05 done and tagged. Backend tests green; UI typechecks clean.
+- Current chapter: none - project complete (core metadata wall + web/wallet UI + testnet wrap-up).
 - Last updated: 2026-06-30
-- Environment: Java 21 + Gradle wrapper 8.10.2 (reused). bloxbean 0.7.2.
+- Environment: Java 21 + Gradle wrapper 8.10.2 (reused). bloxbean 0.7.2. UI: Next.js 14.2.35 + React 18.3.1 + TS.
 
-### Next steps (in order)
-1. Ch 02 - read the feed (parse posts back; newest-first; fetch is integration).
-2. Ch 03 - Spring Boot API (build unsigned post tx + feed endpoint; MockMvc tests).
-3. Ch 04 - Next.js + CIP-30 wallet UI (connect, post via wallet-sign, render feed).
-4. Ch 05 - testnet + wrap-up (+ optional extensions: dApp/datum, NFT receipt, fee+pin, moderation).
+### Next steps (optional, not built - documented in Ch 05)
+1. dApp/datum version (posts at a script address -> on-chain rules).
+2. NFT receipt per post (CIP-25). 3. Fee + pin tier. 4. View-only curator moderation.
+5. Pagination/indexer for a large feed. (Otherwise move to portfolio project #3, token-faucet.)
 
 ## Chapter status board
 Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
@@ -21,10 +20,10 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 |----|-------|--------|-----|-------|
 | 00 | Orientation | [x] | ch00 | scaffold + web-UI architecture |
 | 01 | Post a message (metadata + chunking) | [x] | ch01 | WallPost + Wall (chunk to 64B, label 1719); 8 tests |
-| 02 | Read the feed | [ ] | - | |
-| 03 | Backend API (Spring Boot) | [ ] | - | build unsigned post tx + feed |
-| 04 | Web UI (Next.js + CIP-30 wallet) | [ ] | - | |
-| 05 | Testnet + wrap-up (+ optional extensions) | [ ] | - | |
+| 02 | Read the feed | [x] | ch02 | Feed.newestFirst + FeedReader/BlockfrostFeedReader (label query) |
+| 03 | Backend API (Spring Boot) | [x] | ch03 | WallController: GET /feed, POST /posts/build; MockMvc tests |
+| 04 | Web UI (Next.js + CIP-30 wallet) | [x] | ch04 | SubmitService + /posts/submit; ui/ Next.js page; typechecks |
+| 05 | Testnet + wrap-up (+ optional extensions) | [x] | ch05 | preprod/mainnet config; extensions + simplifications documented |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -42,3 +41,11 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 ### 2026-06-30 - kickoff
 - Did: scaffolded repo (reused wrapper/gitignore), CLAUDE.md + PROGRESS.md, starting Ch 00/01.
 - Next: Ch 01 (post + chunking), then Ch 02/03.
+
+### 2026-06-30 - finished (Ch 02-05)
+- Did: Ch 02 feed read (Feed.newestFirst, FeedReader + BlockfrostFeedReader); Ch 03 Spring Boot API
+  (WallController GET /feed + POST /posts/build, MockMvc tests); Ch 04 web/wallet UI (SubmitService +
+  POST /posts/submit, Next.js 14 + CIP-30 page, hex->bech32 normalisation); Ch 05 testnet/mainnet
+  config + wrap-up doc. All backend tests green; UI typechecks clean; ASCII-clean; tags ch02..ch05.
+- Project COMPLETE (core). Optional extensions documented but not built.
+- Next: portfolio project #3, token-faucet, when requested.
