@@ -1,0 +1,41 @@
+package org.wall;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.time.Instant;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+@DisplayName("Wall post")
+class WallPostTest {
+
+  @Test
+  @DisplayName("create stamps the timestamp")
+  void create() {
+    WallPost p = WallPost.create("bob", "hi", Instant.parse("2026-06-30T12:00:00Z"));
+    assertThat(p.author()).isEqualTo("bob");
+    assertThat(p.message()).isEqualTo("hi");
+    assertThat(p.timestamp()).isEqualTo("2026-06-30T12:00:00Z");
+  }
+
+  @Test
+  @DisplayName("rejects an empty message")
+  void rejectsEmptyMessage() {
+    assertThatThrownBy(() -> new WallPost("bob", "", "2026-06-30T12:00:00Z"))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  @DisplayName("rejects an author longer than 64 bytes")
+  void rejectsLongAuthor() {
+    assertThatThrownBy(() -> new WallPost("x".repeat(65), "hi", "2026-06-30T12:00:00Z"))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  @DisplayName("treats a null author as empty")
+  void nullAuthorEmpty() {
+    assertThat(new WallPost(null, "hi", "2026-06-30T12:00:00Z").author()).isEmpty();
+  }
+}

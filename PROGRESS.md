@@ -3,8 +3,8 @@
 > Update at the end of every work session. Read `CLAUDE.md` first.
 
 ## Current state
-- Status: started. Scaffold + Ch 00/01 this session (CLI memory wall, metadata-based).
-- Current chapter: see board.
+- Status: started. Scaffold + Ch 00/01 done (web-UI architecture; metadata-based post core). 8 tests green.
+- Current chapter: Next up Ch 02 (read the feed).
 - Last updated: 2026-06-30
 - Environment: Java 21 + Gradle wrapper 8.10.2 (reused). bloxbean 0.7.2.
 
@@ -19,8 +19,8 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 
 | Ch | Title | Status | Tag | Notes |
 |----|-------|--------|-----|-------|
-| 00 | Orientation | [ ] | - | |
-| 01 | Post a message (metadata + chunking) | [ ] | - | |
+| 00 | Orientation | [x] | ch00 | scaffold + web-UI architecture |
+| 01 | Post a message (metadata + chunking) | [x] | ch01 | WallPost + Wall (chunk to 64B, label 1719); 8 tests |
 | 02 | Read the feed | [ ] | - | |
 | 03 | Backend API (Spring Boot) | [ ] | - | build unsigned post tx + feed |
 | 04 | Web UI (Next.js + CIP-30 wallet) | [ ] | - | |
