@@ -1,0 +1,23 @@
+# Secrets (never commit real keys)
+secrets/
+*.skey
+*.seed
+.env
+.env.*
+!.env.example
+
+# Java / Gradle
+.gradle/
+build/
+bin/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local databases / proof receipts
+*.sqlite
+*.db
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
