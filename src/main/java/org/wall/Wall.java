@@ -72,4 +72,19 @@ public final class Wall {
     metadata.put(BigInteger.valueOf(WALL_LABEL), postMap(post));
     return metadata;
   }
+
+  /**
+   * Read a {@link WallPost} back out of a post metadata map (the inverse of {@link #postMap}),
+   * rejoining the message chunks in order. This is what the feed reader does after fetching a
+   * transaction's metadata from the chain.
+   */
+  public static WallPost parsePost(CBORMetadataMap map) {
+    CBORMetadataList chunks = (CBORMetadataList) map.get("m");
+    StringBuilder message = new StringBuilder();
+    for (int i = 0; i < chunks.size(); i++) {
+      message.append(String.valueOf(chunks.getValueAt(i)));
+    }
+    return new WallPost(
+        String.valueOf(map.get("a")), message.toString(), String.valueOf(map.get("ts")));
+  }
 }
