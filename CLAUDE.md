@@ -1,7 +1,7 @@
 # CLAUDE.md - Memory Wall (read this first)
 
 > Fresh agent: read this, then `PROGRESS.md`. Build chapter by chapter, TDD, one git tag per
-> chapter. House rules: `../../CLAUDE.md` (portfolio) and `../../../xUSDC/usdcx-java-course/CLAUDE.md`
+> chapter. House rules: `../../CLAUDE.md` (portfolio) and `../usdcx-java-course/CLAUDE.md`
 > (the exemplar). ASCII only; no Co-Authored-By trailer (machine git hooks).
 
 ## 1. What this is
