@@ -16,9 +16,13 @@
   Next.js 14.2.35 + React 18.3.1 + TS.
 
 ### Next steps (optional, not built)
-1. Live public run: expose the backend via Tailscale Funnel/Cloudflare, deploy the UI to Pages, set
-   WALL_CORS_ORIGINS; do a real preprod post (needs a funded wallet). SECURITY AUDIT the repo + git
-   history before making it public.
+1. HOST IT PUBLICLY -> read `infra/AGENT-HANDOFF.md` (full readiness state + the 3 remaining config
+   gaps + the deploy runbook). In short: (a) make the Blockfrost project id configurable in
+   WallConfig (WALL_BACKEND_PROJECT_ID; "wall" only works for local Yaci), (b) UI static-export config
+   in ui/next.config.mjs for Pages, (c) CVE re-check of Spring Boot/bloxbean/Next.js. Then run the
+   backend (bound to localhost) + `tailscale funnel 8090` + point ui/public/config.js at the tunnel +
+   deploy the UI to Pages + set WALL_CORS_ORIGINS. The server needs no key/funds; posters use their
+   own wallets. Repo-public is already audited SAFE.
 2. Images (see docs/future-images.md). 3. dApp/datum version. 4. NFT receipt (CIP-25).
 5. Pagination/indexer for a large feed. (Otherwise move to portfolio project #3, token-faucet.)
 

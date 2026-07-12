@@ -59,9 +59,13 @@ memory-wall/
   display-side blocklist moderation, a Blockfrost read-only fallback, and a runtime-configurable
   backend URL. A beginner-first networking chapter. (Images stay text-only; see docs/future-images.md.)
 
-## 6. Going to mainnet
+## 6. Going to mainnet / hosting it publicly
 Switch the backend URL + network in config; posting/reading logic and the UI are identical. Users
 already hold their own keys (the wallet signs), so no server-side key handling changes.
+
+To actually HOST the wall publicly (from a home box, no VPS), read `infra/AGENT-HANDOFF.md` - it has
+the current readiness state, the 3 small remaining config gaps, and the exact deploy runbook
+(Tailscale Funnel/Cloudflare + Cloudflare/GitHub Pages).
 
 ## 7. How to continue right now
 Read `PROGRESS.md` -> Current chapter + Next steps -> TDD -> keep it green
