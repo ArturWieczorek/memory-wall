@@ -1,6 +1,9 @@
 wall:
   # Cardano backend (Yaci DevKit's Blockfrost-compatible API by default; a preprod/preview URL later).
   backend-url: ${WALL_BACKEND_URL:http://localhost:8080/api/v1/}
+  # Provider project id / API key. "wall" is fine for local Yaci DevKit (it ignores it); for hosted
+  # Blockfrost (preprod/mainnet) set your real key via the env var. A SECRET - never commit it.
+  backend-project-id: ${WALL_BACKEND_PROJECT_ID:wall}
 
   # Browser origins allowed to call this API (the hosted UI). Comma-separated; "*" allows any.
   # e.g. WALL_CORS_ORIGINS=https://my-wall.pages.dev,https://my-wall.example.com

@@ -8,6 +8,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * with no extra config; each can be overridden by env vars (see {@code application.yml}).
  *
  * @param backendUrl base URL of the Cardano backend (Blockfrost-compatible)
+ * @param backendProjectId provider project id / API key. Ignored by local Yaci DevKit (default
+ *     "wall"); MUST be your real key for hosted Blockfrost (preprod/mainnet). A secret - keep it in
+ *     env (WALL_BACKEND_PROJECT_ID), never in the repo.
  * @param corsAllowedOrigins browser origins allowed to call the API (the hosted UI); "*" allows any
  * @param rateLimit per-IP request cap that protects the (home-hosted) box from abuse
  * @param blocklist case-insensitive substrings; a post whose author or message contains one is
@@ -19,6 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "wall")
 public record WallProperties(
     String backendUrl,
+    String backendProjectId,
     List<String> corsAllowedOrigins,
     RateLimit rateLimit,
     List<String> blocklist,
@@ -26,6 +30,8 @@ public record WallProperties(
     Integer maxTxChars) {
 
   public WallProperties {
+    backendProjectId =
+        (backendProjectId == null || backendProjectId.isBlank()) ? "wall" : backendProjectId;
     corsAllowedOrigins =
         corsAllowedOrigins == null || corsAllowedOrigins.isEmpty()
             ? List.of("*")

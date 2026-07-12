@@ -13,7 +13,7 @@ public class WallConfig {
 
   @Bean
   public BackendService backendService(WallProperties props) {
-    return new BFBackendService(props.backendUrl(), "wall");
+    return new BFBackendService(props.backendUrl(), props.backendProjectId());
   }
 
   /**

@@ -40,13 +40,12 @@
   straight from the chain when the backend is down). Backend URL is runtime config in
   `ui/public/config.js` (`window.__WALL_API__`, `window.__WALL_NETWORK__`) - no rebuild to change it.
 
-## Remaining work before real-network hosting (NOT yet done)
-1. **Make the provider project id configurable.** `WallConfig` hardcodes
-   `new BFBackendService(props.backendUrl(), "wall")`. `"wall"` is a placeholder that only works with
-   local **Yaci DevKit**. For **preprod/mainnet Blockfrost** the project id must be the user's real
-   key. Add `WallProperties.backendProjectId` (env `WALL_BACKEND_PROJECT_ID`, default `"wall"`), use
-   it in `WallConfig`, document in `application.yml`. ~5 lines + a note. Without this the feed/build
-   calls to real Blockfrost get 403.
+## Remaining work before real-network hosting
+1. [DONE 2026-07-13] **Provider project id is now configurable.** `WallProperties.backendProjectId`
+   (env `WALL_BACKEND_PROJECT_ID`, default `"wall"` for local Yaci); `WallConfig` uses it. VERIFIED
+   locally against real preprod Blockfrost: `GET /api/feed` read a real label-1719 post and
+   `POST /api/posts/build` produced a valid unsigned tx. (The key is a secret - env only, never
+   committed.)
 2. **UI static-export config for Pages.** `ui/next.config.mjs` has a dev-only `rewrites()` proxy.
    Static hosting (Cloudflare/GitHub Pages) needs `output: 'export'` and the rewrites guarded to dev
    only (in production the UI calls the backend directly via `window.__WALL_API__`, so the proxy is
