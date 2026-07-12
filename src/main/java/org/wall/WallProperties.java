@@ -12,32 +12,43 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param rateLimit per-IP request cap that protects the (home-hosted) box from abuse
  * @param blocklist case-insensitive substrings; a post whose author or message contains one is
  *     hidden from the feed (display-side moderation - it cannot remove anything from the chain)
+ * @param maxMessageBytes reject a post whose message exceeds this many UTF-8 bytes (anti-DoS)
+ * @param maxTxChars reject a submit whose txCbor/witness hex exceeds this many characters
+ *     (anti-DoS)
  */
 @ConfigurationProperties(prefix = "wall")
 public record WallProperties(
     String backendUrl,
     List<String> corsAllowedOrigins,
     RateLimit rateLimit,
-    List<String> blocklist) {
+    List<String> blocklist,
+    Integer maxMessageBytes,
+    Integer maxTxChars) {
 
   public WallProperties {
     corsAllowedOrigins =
         corsAllowedOrigins == null || corsAllowedOrigins.isEmpty()
             ? List.of("*")
             : List.copyOf(corsAllowedOrigins);
-    rateLimit = rateLimit == null ? new RateLimit(true, 20) : rateLimit;
+    rateLimit = rateLimit == null ? new RateLimit(true, 20, "") : rateLimit;
     blocklist = blocklist == null ? List.of() : List.copyOf(blocklist);
+    maxMessageBytes = (maxMessageBytes == null || maxMessageBytes <= 0) ? 4096 : maxMessageBytes;
+    maxTxChars = (maxTxChars == null || maxTxChars <= 0) ? 100_000 : maxTxChars;
   }
 
   /**
    * @param enabled turn the per-IP limit on/off
    * @param requestsPerMinute allowed API requests per client IP per minute (writes especially)
+   * @param clientIpHeader header carrying the real client IP behind a trusted proxy (e.g.
+   *     "CF-Connecting-IP" behind Cloudflare). Blank = use the socket address. Do NOT set this to
+   *     X-Forwarded-For: a client can spoof its first hop and evade the limit.
    */
-  public record RateLimit(boolean enabled, int requestsPerMinute) {
+  public record RateLimit(boolean enabled, int requestsPerMinute, String clientIpHeader) {
     public RateLimit {
       if (requestsPerMinute <= 0) {
         requestsPerMinute = 20;
       }
+      clientIpHeader = clientIpHeader == null ? "" : clientIpHeader;
     }
   }
 }

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class BlocklistTest {
 
   private static Blocklist withTerms(String... terms) {
-    return new Blocklist(new WallProperties(null, null, null, List.of(terms)));
+    return new Blocklist(new WallProperties(null, null, null, List.of(terms), null, null));
   }
 
   private static WallPost post(String author, String message) {
@@ -39,7 +39,7 @@ class BlocklistTest {
   @Test
   @DisplayName("an empty blocklist hides nothing")
   void emptyBlocksNothing() {
-    Blocklist b = new Blocklist(new WallProperties(null, null, null, null));
+    Blocklist b = new Blocklist(new WallProperties(null, null, null, null, null, null));
     assertThat(b.isBlocked(post("a", "anything at all"))).isFalse();
     List<WallPost> posts = List.of(post("a", "one"), post("b", "two"));
     assertThat(b.filter(posts)).isEqualTo(posts);

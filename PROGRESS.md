@@ -48,6 +48,20 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-12 - pre-publish security audit + fixes
+- Ran a dedicated review agent (secrets + exposed-backend posture). VERDICTS: repo-public = SAFE (no
+  secrets in tree or 9-commit history; .gitignore clean; only note = author email becomes public);
+  deploy-public = SAFE-WITH-FIXES. No SSRF, no stack-trace leak, CORS "*" ok (no credentials).
+- Applied fixes 1-4 (+ tests): (1) cap message length in POST /posts/build (wall.max-message-bytes,
+  default 4096) - anti-DoS; (2) rate limiter no longer trusts the spoofable first X-Forwarded-For hop
+  - uses a configurable trusted header (wall.rate-limit.client-ip-header, e.g. CF-Connecting-IP) else
+  the socket addr; (3) bind server to 127.0.0.1 (server.address, WALL_BIND) so only the tunnel can
+  reach it; (4) cap txCbor/witness size in POST /posts/submit (wall.max-tx-chars, default 100000).
+  New tests: RateLimitFilterTest + two WallApiTest rejections; all green.
+- Deferred: (5) verify Spring Boot / bloxbean / Next.js versions against current CVEs before going
+  live (agent had no CVE feed). Still NOT published - publish is user-gated.
+- Beginner explainer of the 4 fixes written to /home/artur/Projects/Workspace/memory-wall-security-fixes-explained.md.
+
 ### 2026-07-12 - Ch 06: self-hosting hardening + networking teaching chapter
 - Backend (no new deps): GET /api/health; CORS for /api/** (wall.cors-allowed-origins, default *);
   per-IP fixed-window rate limit -> 429 (RateLimiter + RateLimitFilter, reads X-Forwarded-For behind

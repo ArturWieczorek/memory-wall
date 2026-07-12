@@ -1,5 +1,6 @@
 package org.wall;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -28,16 +29,19 @@ public class WallController {
   private final PostTxBuilder txBuilder;
   private final SubmitService submitService;
   private final Blocklist blocklist;
+  private final WallProperties props;
 
   public WallController(
       FeedReader feedReader,
       PostTxBuilder txBuilder,
       SubmitService submitService,
-      Blocklist blocklist) {
+      Blocklist blocklist,
+      WallProperties props) {
     this.feedReader = feedReader;
     this.txBuilder = txBuilder;
     this.submitService = submitService;
     this.blocklist = blocklist;
+    this.props = props;
   }
 
   /** Liveness check the UI polls to show an online/offline status light. */
@@ -63,6 +67,10 @@ public class WallController {
     if (req.message() == null || req.message().isBlank()) {
       return ResponseEntity.badRequest().body("message must not be empty");
     }
+    if (req.message().getBytes(StandardCharsets.UTF_8).length > props.maxMessageBytes()) {
+      return ResponseEntity.badRequest()
+          .body("message too long (max " + props.maxMessageBytes() + " bytes)");
+    }
     if (req.address() == null || req.address().isBlank()) {
       return ResponseEntity.badRequest().body("address is required");
     }
@@ -83,6 +91,9 @@ public class WallController {
         || req.witness() == null
         || req.witness().isBlank()) {
       return ResponseEntity.badRequest().body("txCbor and witness are required");
+    }
+    if (req.txCbor().length() > props.maxTxChars() || req.witness().length() > props.maxTxChars()) {
+      return ResponseEntity.badRequest().body("transaction too large");
     }
     return ResponseEntity.ok(new SubmitResponse(submitService.submit(req.txCbor(), req.witness())));
   }

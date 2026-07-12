@@ -69,4 +69,29 @@ class WallApiTest {
                 .content("{\"address\":\"addr_test1xyz\",\"author\":\"a\",\"message\":\"\"}"))
         .andExpect(status().isBadRequest());
   }
+
+  @Test
+  @DisplayName("POST /api/posts/build rejects an over-long message (anti-DoS)")
+  void buildRejectsTooLong() throws Exception {
+    String huge = "x".repeat(5000); // default cap is 4096 bytes
+    mvc.perform(
+            post("/api/posts/build")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{\"address\":\"addr_test1xyz\",\"author\":\"a\",\"message\":\""
+                        + huge
+                        + "\"}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("POST /api/posts/submit rejects an over-large transaction (anti-DoS)")
+  void submitRejectsTooLarge() throws Exception {
+    String hugeCbor = "0".repeat(100_001); // default cap is 100000 chars
+    mvc.perform(
+            post("/api/posts/submit")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"txCbor\":\"" + hugeCbor + "\",\"witness\":\"ab\"}"))
+        .andExpect(status().isBadRequest());
+  }
 }

@@ -10,6 +10,14 @@ wall:
   rate-limit:
     enabled: ${WALL_RATE_LIMIT_ENABLED:true}
     requests-per-minute: ${WALL_RATE_LIMIT_RPM:20}
+    # Header carrying the real client IP behind a trusted proxy (e.g. CF-Connecting-IP behind
+    # Cloudflare). Blank = use the socket address. Do NOT set to X-Forwarded-For (spoofable).
+    client-ip-header: ${WALL_CLIENT_IP_HEADER:}
+
+  # Reject a post whose message exceeds this many UTF-8 bytes (guards against huge-tx abuse).
+  max-message-bytes: ${WALL_MAX_MESSAGE_BYTES:4096}
+  # Reject a submit whose txCbor/witness hex exceeds this many characters.
+  max-tx-chars: ${WALL_MAX_TX_CHARS:100000}
 
   # Display-side moderation: comma-separated terms; a post whose author or message contains one is
   # hidden from the feed (it is still permanent on-chain - we just do not show it).
@@ -17,3 +25,6 @@ wall:
 
 server:
   port: ${WALL_PORT:8090}
+  # Bind to localhost so the backend is reachable ONLY through the tunnel (Funnel/Cloudflare), not
+  # directly on the LAN. Set WALL_BIND=0.0.0.0 only if you deliberately want direct network access.
+  address: ${WALL_BIND:127.0.0.1}
