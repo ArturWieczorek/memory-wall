@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * Boots the backend (no real server) and exercises the API with MockMvc. The feed reader is
  * stubbed, so the test needs no chain - it verifies wiring + the endpoints' behaviour.
  */
-@SpringBootTest
+@SpringBootTest(properties = "wall.rate-limit.enabled=false") // limiter tested separately
 @AutoConfigureMockMvc
 @DisplayName("Wall API")
 class WallApiTest {
@@ -30,6 +31,22 @@ class WallApiTest {
 
   // Replaces BlockfrostFeedReader so we control what the feed returns.
   @MockitoBean private FeedReader feedReader;
+
+  @Test
+  @DisplayName("GET /api/health reports ok (the UI's status probe)")
+  void health() throws Exception {
+    mvc.perform(get("/api/health"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("ok"));
+  }
+
+  @Test
+  @DisplayName("CORS: a cross-origin request is allowed (header present)")
+  void cors() throws Exception {
+    mvc.perform(get("/api/health").header("Origin", "https://my-wall.example.com"))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Access-Control-Allow-Origin", "*"));
+  }
 
   @Test
   @DisplayName("GET /api/feed returns recent posts")

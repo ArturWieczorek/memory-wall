@@ -54,6 +54,10 @@ memory-wall/
   render the live feed. Verified by typecheck/build.
 - 05 Testnet + wrap-up - preprod config, mainnet notes, optional extensions (dApp/datum, NFT receipt,
   fee + pin, curator moderation), what we simplified.
+- 06 Serve it from home (networking + hardening) - run the backend on your own box (no VPS) exposed
+  via Tailscale Funnel/Cloudflare; adds /health + a UI status light, CORS, per-IP rate limit,
+  display-side blocklist moderation, a Blockfrost read-only fallback, and a runtime-configurable
+  backend URL. A beginner-first networking chapter. (Images stay text-only; see docs/future-images.md.)
 
 ## 6. Going to mainnet
 Switch the backend URL + network in config; posting/reading logic and the UI are identical. Users

@@ -2,5 +2,18 @@ wall:
   # Cardano backend (Yaci DevKit's Blockfrost-compatible API by default; a preprod/preview URL later).
   backend-url: ${WALL_BACKEND_URL:http://localhost:8080/api/v1/}
 
+  # Browser origins allowed to call this API (the hosted UI). Comma-separated; "*" allows any.
+  # e.g. WALL_CORS_ORIGINS=https://my-wall.pages.dev,https://my-wall.example.com
+  cors-allowed-origins: ${WALL_CORS_ORIGINS:*}
+
+  # Per-IP request cap, so a public/home-hosted box cannot be trivially hammered.
+  rate-limit:
+    enabled: ${WALL_RATE_LIMIT_ENABLED:true}
+    requests-per-minute: ${WALL_RATE_LIMIT_RPM:20}
+
+  # Display-side moderation: comma-separated terms; a post whose author or message contains one is
+  # hidden from the feed (it is still permanent on-chain - we just do not show it).
+  blocklist: ${WALL_BLOCKLIST:}
+
 server:
   port: ${WALL_PORT:8090}

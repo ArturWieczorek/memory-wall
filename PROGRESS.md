@@ -3,14 +3,23 @@
 > Update at the end of every work session. Read `CLAUDE.md` first.
 
 ## Current state
-- Status: COMPLETE. Ch 00-05 done and tagged. Backend tests green; UI typechecks clean.
-- Current chapter: none - project complete (core metadata wall + web/wallet UI + testnet wrap-up).
-- Last updated: 2026-06-30
-- Environment: Java 21 + Gradle wrapper 8.10.2 (reused). bloxbean 0.7.2. UI: Next.js 14.2.35 + React 18.3.1 + TS.
+- Status: COMPLETE. Ch 00-06 done. Ch 06 adds hardening for public self-hosting from a home box:
+  /health + UI status light, CORS, per-IP rate limit, display-side blocklist moderation, a
+  Blockfrost read-only fallback when the backend is down, and runtime-configurable backend URL.
+  Backend tests green (incl. new RateLimiter/Blocklist/moderation/CORS/health); UI typechecks + next
+  build clean.
+- Current chapter: none - project complete. Images are text-only for now; a detailed future design is
+  captured in docs/future-images.md (link+hash, IPFS, click-to-load, admin approval queue,
+  free NSFW/CSAM detection tools, legal shape).
+- Last updated: 2026-07-12
+- Environment: Java 21 + Gradle wrapper 8.10.2 (reused). bloxbean 0.7.2. Spring Boot 3.4.13. UI:
+  Next.js 14.2.35 + React 18.3.1 + TS.
 
-### Next steps (optional, not built - documented in Ch 05)
-1. dApp/datum version (posts at a script address -> on-chain rules).
-2. NFT receipt per post (CIP-25). 3. Fee + pin tier. 4. View-only curator moderation.
+### Next steps (optional, not built)
+1. Live public run: expose the backend via Tailscale Funnel/Cloudflare, deploy the UI to Pages, set
+   WALL_CORS_ORIGINS; do a real preprod post (needs a funded wallet). SECURITY AUDIT the repo + git
+   history before making it public.
+2. Images (see docs/future-images.md). 3. dApp/datum version. 4. NFT receipt (CIP-25).
 5. Pagination/indexer for a large feed. (Otherwise move to portfolio project #3, token-faucet.)
 
 ## Chapter status board
@@ -24,6 +33,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 03 | Backend API (Spring Boot) | [x] | ch03 | WallController: GET /feed, POST /posts/build; MockMvc tests |
 | 04 | Web UI (Next.js + CIP-30 wallet) | [x] | ch04 | SubmitService + /posts/submit; ui/ Next.js page; typechecks |
 | 05 | Testnet + wrap-up (+ optional extensions) | [x] | ch05 | preprod/mainnet config; extensions + simplifications documented |
+| 06 | Serve it from home (networking + hardening) | [x] | ch06 | /health + status light, CORS, rate limit, blocklist, chain read-fallback, runtime config; beginner networking chapter |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -38,6 +48,24 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-12 - Ch 06: self-hosting hardening + networking teaching chapter
+- Backend (no new deps): GET /api/health; CORS for /api/** (wall.cors-allowed-origins, default *);
+  per-IP fixed-window rate limit -> 429 (RateLimiter + RateLimitFilter, reads X-Forwarded-For behind
+  a tunnel; wall.rate-limit.*); display-side Blocklist moderation applied when serving the feed
+  (wall.blocklist) - hides from OUR feed, cannot delete from chain.
+- UI: green/red backend status light (polls /health), offline banner + Post disabled when down;
+  optional Blockfrost project-id read-fallback (reads label-1719 posts straight from the chain when
+  the backend is offline; read-only); backend URL made runtime-configurable via public/config.js
+  (window.__WALL_API__/__WALL_NETWORK__), so no rebuild to change it.
+- Chapter 06 = a beginner-first networking + home-hosting guide (client/server, IP/port, localhost,
+  NAT, tunnels/Funnel/Cloudflare, HTTPS, CORS+preflight, health/graceful degradation, rate limiting,
+  moderation, runtime config) with analogies, snippets, and step-by-step commands.
+- Captured images as a future extension: docs/future-images.md (user-hosted HTTPS/IPFS links,
+  content hashing for integrity, click-to-load, admin approval queue, free NSFW/CSAM detection tools,
+  and the legal/responsibility shape).
+- Tests: RateLimiterTest, BlocklistTest, WallModerationTest + WallApiTest health/CORS; backend green,
+  UI tsc + next build clean. NOT yet made public - do a full secrets/security audit first.
+
 ### 2026-06-30 - kickoff
 - Did: scaffolded repo (reused wrapper/gitignore), CLAUDE.md + PROGRESS.md, starting Ch 00/01.
 - Next: Ch 01 (post + chunking), then Ch 02/03.

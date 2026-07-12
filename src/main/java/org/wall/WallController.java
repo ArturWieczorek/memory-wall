@@ -2,6 +2,7 @@ package org.wall;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,17 +27,29 @@ public class WallController {
   private final FeedReader feedReader;
   private final PostTxBuilder txBuilder;
   private final SubmitService submitService;
+  private final Blocklist blocklist;
 
   public WallController(
-      FeedReader feedReader, PostTxBuilder txBuilder, SubmitService submitService) {
+      FeedReader feedReader,
+      PostTxBuilder txBuilder,
+      SubmitService submitService,
+      Blocklist blocklist) {
     this.feedReader = feedReader;
     this.txBuilder = txBuilder;
     this.submitService = submitService;
+    this.blocklist = blocklist;
+  }
+
+  /** Liveness check the UI polls to show an online/offline status light. */
+  @GetMapping("/health")
+  public Map<String, String> health() {
+    return Map.of("status", "ok");
   }
 
   @GetMapping("/feed")
   public List<WallPost> feed(@RequestParam(defaultValue = "20") int limit) {
-    return feedReader.recent(limit);
+    // Display-side moderation: blocked posts are hidden from the feed (still permanent on-chain).
+    return blocklist.filter(feedReader.recent(limit));
   }
 
   /** Request to build a post tx: who pays/signs (address), the display name, and the message. */
