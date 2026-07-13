@@ -52,12 +52,13 @@ class WallApiTest {
   @DisplayName("GET /api/feed returns recent posts")
   void feed() throws Exception {
     when(feedReader.recent(anyInt()))
-        .thenReturn(List.of(new WallPost("alice", "gm cardano", "2026-06-30T12:00:00Z")));
+        .thenReturn(List.of(new WallPost("alice", "gm cardano", "2026-06-30T12:00:00Z", "tx123")));
 
     mvc.perform(get("/api/feed"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].author").value("alice"))
-        .andExpect(jsonPath("$[0].message").value("gm cardano"));
+        .andExpect(jsonPath("$[0].message").value("gm cardano"))
+        .andExpect(jsonPath("$[0].txHash").value("tx123"));
   }
 
   @Test

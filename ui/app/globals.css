@@ -1,0 +1,62 @@
+/* Theme tokens. Light is the default; [data-theme="dark"] overrides. The layout sets data-theme
+   before paint (from a saved choice or the OS preference), so there is no flash on load. */
+:root {
+  --bg: #ffffff;
+  --fg: #1a1a1a;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --link: #2563eb;
+  --danger: #b42323;
+  --danger-bg: rgba(180, 35, 35, 0.08);
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --chip-bg: #f1f5f9;
+}
+:root[data-theme="dark"] {
+  --bg: #0f1115;
+  --fg: #e6e6e6;
+  --muted: #9aa4b2;
+  --border: #262b33;
+  --link: #6ea8fe;
+  --danger: #ff6b6b;
+  --danger-bg: rgba(255, 107, 107, 0.12);
+  --input-bg: #11151c;
+  --input-border: #2b323c;
+  --chip-bg: #1b2029;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+a {
+  color: var(--link);
+}
+
+input,
+textarea,
+select {
+  background: var(--input-bg);
+  color: var(--fg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  color: var(--fg);
+  background: var(--chip-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

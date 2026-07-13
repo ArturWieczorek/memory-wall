@@ -15,15 +15,16 @@ what shipped, and what was deliberately left out (with the reason). Updated as w
 
 These are the three areas chosen on 2026-07-13 (tiers B, C, and D-minus-systemd from the review).
 
-### Chapter 07 - Polish the wall (UX)  `[~]`
+### Chapter 07 - Polish the wall (UX)  `[x]` (tag ch07)
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 07.1 | Block-explorer link per post | `[ ]` | Needs the tx hash end to end (backend `WallPost.txHash` -> feed JSON -> UI links to cardanoscan for the wall's network). |
-| 07.2 | Show the wall's network in the header | `[ ]` | So visitors set their wallet to the right network (preprod). |
-| 07.3 | Message byte counter | `[ ]` | UTF-8 bytes vs the backend cap (`wall.max-message-bytes`, 4096). |
-| 07.4 | Relative timestamps ("2h ago") | `[ ]` | Pure function, unit-tested. |
-| 07.5 | Friendlier empty state | `[ ]` | "No posts yet - be the first." |
-| 07.6 | UI test setup (Vitest + RTL) | `[ ]` | New dev dependency; enables TDD for all UI work. Logged in PROGRESS. |
+| 07.1 | Block-explorer link per post | `[x]` | Tx hash carried end to end (`WallPost.txHash` -> feed JSON -> UI "view tx" link via `explorerTxUrl`). |
+| 07.2 | Show the wall's network in the header | `[x]` | `network: <net>` chip in the header. |
+| 07.3 | Message byte counter | `[x]` | `123 / 4096 bytes`, turns red + disables Post over the cap. |
+| 07.4 | Relative timestamps ("2h ago") | `[x]` | `relativeTime()` pure fn, unit-tested; exact time on hover. |
+| 07.5 | Friendlier empty state | `[x]` | Online: "be the first"; offline: hint to paste a Blockfrost key. |
+| 07.6 | UI test setup (Vitest + RTL) | `[x]` | Added Vitest + RTL + jsdom; `npm test`. 19 UI tests (lib + FeedList). |
+| 07.7 | Dark/light theme toggle | `[x]` | CSS variables + `data-theme`; no-flash init in layout; logic unit-tested. |
 
 ### Chapter 08 - Who really posted this? (verified author identity)  `[ ]`
 | # | Feature | Status | Notes |

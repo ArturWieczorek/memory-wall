@@ -3,7 +3,11 @@
 > Update at the end of every work session. Read `CLAUDE.md` first.
 
 ## Current state
-- Status: COMPLETE. Ch 00-06 done. Ch 06 adds hardening for public self-hosting from a home box:
+- Status: LIVE + iterating. Core (Ch 00-06) complete and deployed (repo public; UI on GitHub Pages;
+  backend runnable from home via a tunnel). Now adding polish/feature chapters from docs/BACKLOG.md:
+  Ch 07 (UX + first UI tests) DONE; Ch 08 (verified author identity) and Ch 09 (CI + free GitHub
+  security) next.
+- (Historical) Ch 06 adds hardening for public self-hosting from a home box:
   /health + UI status light, CORS, per-IP rate limit, display-side blocklist moderation, a
   Blockfrost read-only fallback when the backend is down, and runtime-configurable backend URL.
   Backend tests green (incl. new RateLimiter/Blocklist/moderation/CORS/health); UI typechecks + next
@@ -44,6 +48,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 04 | Web UI (Next.js + CIP-30 wallet) | [x] | ch04 | SubmitService + /posts/submit; ui/ Next.js page; typechecks |
 | 05 | Testnet + wrap-up (+ optional extensions) | [x] | ch05 | preprod/mainnet config; extensions + simplifications documented |
 | 06 | Serve it from home (networking + hardening) | [x] | ch06 | /health + status light, CORS, rate limit, blocklist, chain read-fallback, runtime config; beginner networking chapter |
+| 07 | Polish the wall (UX + UI tests) | [x] | ch07 | dark/light theme, time-ago, byte counter, view-tx link, network label, empty state; Vitest+RTL (19 UI tests); WallPost.txHash |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -53,11 +58,25 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | bloxbean cardano-client-lib | 0.7.2 |
 | JUnit / AssertJ | 5.11.3 / 3.26.3 |
 | Spotless / google-java-format | 6.25.0 / 1.22.0 |
+| Vitest / RTL / jsdom (UI tests) | 2.x / 16.x / 25.x |
 
 ## Decisions and deviations (append-only)
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-13 - Ch 07 Polish the wall (UX) + first UI tests
+- Backlog reshaped: `docs/BACKLOG.md` is now canonical. NFT receipt + dApp/datum marked OUT of scope
+  (no functional benefit for a message wall; better taught by other portfolio projects). Building
+  B (UX), C (identity, Ch08), D-minus-systemd (CI + free GitHub security, Ch09).
+- New UI test stack (dependency decision): Vitest 2 + React Testing Library 16 + jsdom 25 +
+  @vitejs/plugin-react 4 (dev only; bumped @types/node to ^22 for the Vite peer). `npm test`.
+- Ch 07 shipped (tag ch07): extracted pure helpers to app/lib.ts (byteLength, relativeTime,
+  explorerTxUrl, rowToPost, theme logic) with 15 unit tests; presentational FeedList with 4 RTL
+  tests. UI: dark/light theme (CSS vars + data-theme + no-flash init), network label, byte counter,
+  time-ago timestamps, "view tx" explorer link, friendly empty state. Backend: WallPost gained an
+  optional txHash (3-arg convenience ctor keeps callers compiling); BlockfrostFeedReader fills it;
+  flows to feed JSON. Backend 27 tests, UI 19 tests, typecheck + static build all green.
+
 ### 2026-07-13 - close hosting gaps 2-3, go public, deploy UI to Pages
 - CVE re-check vs live advisories: Spring Boot 3.4.13 (EOL OSS) -> 3.5.16 (supported; April-2026
   fixes) + testRuntimeOnly(junit-platform-launcher) to align the launcher Gradle 8.10.2 bundles.

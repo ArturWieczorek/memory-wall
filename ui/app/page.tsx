@@ -1,29 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  byteLength,
+  MAX_MESSAGE_BYTES,
+  nextTheme,
+  resolveInitialTheme,
+  rowToPost,
+  type Post,
+  type Theme,
+} from "./lib";
+import { FeedList } from "./FeedList";
 
-type Post = { author: string; message: string; timestamp: string };
 type Health = "checking" | "online" | "offline";
 
 // Runtime config (from public/config.js) - set after deploy, no rebuild needed.
 const cfg = () => (typeof window !== "undefined" ? (window as unknown as Record<string, string>) : {});
 const apiBase = (): string => cfg().__WALL_API__ || ""; // "" = same-origin (dev proxy)
 const network = (): string => cfg().__WALL_NETWORK__ || "preprod";
-
-/** Rebuild a Post from a Blockfrost json_metadata object (mirrors the backend's parser). */
-function rowToPost(row: { json_metadata?: unknown }): Post | null {
-  const j = row?.json_metadata as Record<string, unknown> | undefined;
-  if (!j || typeof j !== "object") return null;
-  const author = typeof j.a === "string" ? j.a : "";
-  const message = Array.isArray(j.m)
-    ? (j.m as unknown[]).join("")
-    : typeof j.m === "string"
-      ? j.m
-      : "";
-  const timestamp = typeof j.ts === "string" ? j.ts : "";
-  if (!message || !timestamp) return null;
-  return { author, message, timestamp };
-}
 
 export default function Home() {
   const [wallets, setWallets] = useState<string[]>([]);
@@ -34,6 +28,7 @@ export default function Home() {
   const [feed, setFeed] = useState<Post[]>([]);
   const [health, setHealth] = useState<Health>("checking");
   const [bfKey, setBfKey] = useState("");
+  const [theme, setTheme] = useState<Theme>("light");
 
   // Poll the backend's health so we can show an online/offline light and disable posting when down.
   async function probe(): Promise<boolean> {
@@ -75,7 +70,7 @@ export default function Home() {
         setStatus("Chain read failed: HTTP " + res.status);
         return;
       }
-      const rows = (await res.json()) as Array<{ json_metadata?: unknown }>;
+      const rows = (await res.json()) as Array<{ tx_hash?: unknown; json_metadata?: unknown }>;
       const posts = rows
         .map(rowToPost)
         .filter((p): p is Post => p !== null)
@@ -88,6 +83,11 @@ export default function Home() {
   }
 
   useEffect(() => {
+    // Adopt the theme the layout script already applied to <html> (falls back if it did not run).
+    const applied = document.documentElement.getAttribute("data-theme");
+    const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+    setTheme(resolveInitialTheme(applied ?? localStorage.getItem("wall-theme"), prefersDark));
+
     const cardano = (window as unknown as { cardano?: Record<string, { enable?: unknown }> }).cardano ?? {};
     setWallets(Object.keys(cardano).filter((k) => typeof cardano[k]?.enable === "function"));
     void loadFeed();
@@ -95,6 +95,17 @@ export default function Home() {
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function toggleTheme() {
+    const t = nextTheme(theme);
+    setTheme(t);
+    document.documentElement.setAttribute("data-theme", t);
+    try {
+      localStorage.setItem("wall-theme", t);
+    } catch {
+      /* ignore storage errors (private mode) */
+    }
+  }
 
   async function post() {
     try {
@@ -147,24 +158,39 @@ export default function Home() {
 
   const dotColor = health === "online" ? "#0a7d2e" : health === "offline" ? "#d24" : "#999";
   const offline = health === "offline";
+  const bytes = byteLength(message);
+  const overLimit = bytes > MAX_MESSAGE_BYTES;
+  const nowMs = Date.now();
 
   return (
     <main>
-      <h1>Memory Wall</h1>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+        <h1 style={{ marginRight: "auto" }}>Memory Wall</h1>
+        <span style={{ fontSize: 12, color: "var(--muted)" }}>network: {network()}</span>
+        <button onClick={toggleTheme} aria-label="Toggle dark mode" style={{ fontSize: 12 }}>
+          {theme === "dark" ? "Light mode" : "Dark mode"}
+        </button>
+      </div>
       <p>Post a permanent message to Cardano. Your wallet signs; the message lives on-chain forever.</p>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "8px 0" }}>
         <span style={{ width: 10, height: 10, borderRadius: "50%", background: dotColor, display: "inline-block" }} />
-        <span style={{ fontSize: 13 }}>
-          wall server: {health === "checking" ? "checking..." : health}
-        </span>
+        <span style={{ fontSize: 13 }}>wall server: {health === "checking" ? "checking..." : health}</span>
         <button onClick={() => void loadFeed()} style={{ marginLeft: "auto", fontSize: 12 }}>
           Refresh
         </button>
       </div>
 
       {offline && (
-        <div style={{ border: "1px solid #b4232388", background: "#b4232322", borderRadius: 8, padding: "8px 12px", fontSize: 14 }}>
+        <div
+          style={{
+            border: "1px solid var(--danger)",
+            background: "var(--danger-bg)",
+            borderRadius: 8,
+            padding: "8px 12px",
+            fontSize: 14,
+          }}
+        >
           The wall server is offline - new posts are unavailable. You can still read existing posts:
           paste a free Blockfrost project id below to load them straight from the chain.
         </div>
@@ -181,7 +207,10 @@ export default function Home() {
         </select>
         <input placeholder="name (optional)" value={author} onChange={(e) => setAuthor(e.target.value)} />
         <textarea placeholder="your message" value={message} onChange={(e) => setMessage(e.target.value)} />
-        <button onClick={() => void post()} disabled={!message.trim() || health !== "online"}>
+        <div style={{ fontSize: 12, color: overLimit ? "var(--danger)" : "var(--muted)", textAlign: "right" }}>
+          {bytes} / {MAX_MESSAGE_BYTES} bytes{overLimit ? " - too long" : ""}
+        </div>
+        <button onClick={() => void post()} disabled={!message.trim() || overLimit || health !== "online"}>
           {offline ? "Posting unavailable (server offline)" : "Post to the wall"}
         </button>
         {status && <p>{status}</p>}
@@ -211,15 +240,7 @@ export default function Home() {
       )}
 
       <h2>The wall</h2>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {feed.map((p, i) => (
-          <li key={i} style={{ borderTop: "1px solid #ddd", padding: "8px 0" }}>
-            <strong>{p.author || "anon"}</strong>{" "}
-            <span style={{ color: "#888", fontSize: 12 }}>{p.timestamp}</span>
-            <div>{p.message}</div>
-          </li>
-        ))}
-      </ul>
+      <FeedList posts={feed} network={network()} nowMs={nowMs} offline={offline} />
     </main>
   );
 }

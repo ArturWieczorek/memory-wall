@@ -38,7 +38,7 @@ public class BlockfrostFeedReader implements FeedReader {
       }
       List<WallPost> posts = new ArrayList<>();
       for (MetadataJSONContent content : result.getValue()) {
-        WallPost post = tryParse(content.getJsonMetadata());
+        WallPost post = tryParse(content.getJsonMetadata(), content.getTxHash());
         if (post != null) {
           posts.add(post);
         }
@@ -49,8 +49,10 @@ public class BlockfrostFeedReader implements FeedReader {
     }
   }
 
-  /** Parse one post from its JSON metadata, returning null if it is malformed. */
-  private static WallPost tryParse(JsonNode node) {
+  /**
+   * Parse one post from its JSON metadata + transaction hash, returning null if it is malformed.
+   */
+  private static WallPost tryParse(JsonNode node, String txHash) {
     if (node == null) {
       return null;
     }
@@ -67,7 +69,7 @@ public class BlockfrostFeedReader implements FeedReader {
       if (message.isEmpty() || ts.isBlank()) {
         return null;
       }
-      return new WallPost(author, message.toString(), ts);
+      return new WallPost(author, message.toString(), ts, txHash == null ? "" : txHash);
     } catch (RuntimeException e) {
       return null; // skip anything that does not look like one of our posts
     }

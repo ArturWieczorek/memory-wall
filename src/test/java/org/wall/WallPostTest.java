@@ -38,4 +38,12 @@ class WallPostTest {
   void nullAuthorEmpty() {
     assertThat(new WallPost(null, "hi", "2026-06-30T12:00:00Z").author()).isEmpty();
   }
+
+  @Test
+  @DisplayName("carries a tx hash, defaulting to empty when unknown")
+  void txHash() {
+    assertThat(new WallPost("bob", "hi", "2026-06-30T12:00:00Z").txHash()).isEmpty();
+    assertThat(new WallPost("bob", "hi", "2026-06-30T12:00:00Z", "deadbeef").txHash())
+        .isEqualTo("deadbeef");
+  }
 }
