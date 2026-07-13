@@ -1,7 +1,7 @@
 plugins {
     `java-library`
     application // `./gradlew run` starts the Spring Boot backend
-    id("com.diffplug.spotless") version "6.25.0"
+    id("com.diffplug.spotless") version "8.8.0"
 }
 
 repositories {
