@@ -74,9 +74,10 @@ public class WallController {
   }
 
   @GetMapping("/feed")
-  public List<WallPost> feed(@RequestParam(defaultValue = "20") int limit) {
+  public List<WallPost> feed(
+      @RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "1") int page) {
     // Display-side moderation: blocked posts are hidden from the feed (still permanent on-chain).
-    return blocklist.filter(feedReader.recent(limit));
+    return blocklist.filter(feedReader.recent(limit, page));
   }
 
   /**

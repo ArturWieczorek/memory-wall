@@ -19,6 +19,8 @@ import { FeedList } from "./FeedList";
 
 type Health = "checking" | "online" | "offline";
 
+const PAGE_SIZE = 20; // posts fetched per "page"; a full page implies there may be more
+
 // Runtime config (from public/config.js) - set after deploy, no rebuild needed.
 const cfg = () => (typeof window !== "undefined" ? (window as unknown as Record<string, string>) : {});
 const apiBase = (): string => cfg().__WALL_API__ || ""; // "" = same-origin (dev proxy)
@@ -38,6 +40,8 @@ export default function Home() {
   const [config, setConfig] = useState<WallConfig | null>(null);
   const [tipAda, setTipAda] = useState("");
   const [pinColor, setPinColor] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
   // Fetch the fee/pin tier config once, so we know whether to show the tip field + rules.
   async function loadConfig() {
@@ -65,19 +69,44 @@ export default function Home() {
     }
   }
 
-  // Load the feed: from the backend when it is up, otherwise directly from the chain (if a key is set).
+  // Fetch one page of the feed from the backend (null on failure).
+  async function fetchFeedPage(p: number): Promise<Post[] | null> {
+    try {
+      const res = await fetch(`${apiBase()}/api/feed?limit=${PAGE_SIZE}&page=${p}`);
+      if (res.ok) return (await res.json()) as Post[];
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+
+  // Load (reset to) the first page: from the backend when up, else directly from the chain.
   async function loadFeed() {
     const online = await probe();
     if (online) {
-      try {
-        const res = await fetch(`${apiBase()}/api/feed`);
-        if (res.ok) setFeed((await res.json()) as Post[]);
-      } catch {
-        /* fall through to chain read below */
+      const posts = await fetchFeedPage(1);
+      if (posts) {
+        setFeed(posts);
+        setPage(1);
+        setHasMore(posts.length >= PAGE_SIZE); // a full page implies there may be more
       }
       return;
     }
     await loadFeedFromChain();
+  }
+
+  // "Load more": fetch the next page and append it (de-duped by tx hash).
+  async function loadMore() {
+    const next = page + 1;
+    const posts = await fetchFeedPage(next);
+    if (posts) {
+      setFeed((prev) => {
+        const seen = new Set(prev.map((p) => p.txHash).filter(Boolean));
+        return [...prev, ...posts.filter((p) => !p.txHash || !seen.has(p.txHash))];
+      });
+      setPage(next);
+      setHasMore(posts.length >= PAGE_SIZE);
+    }
   }
 
   // Read-only fallback: pull posts straight from Blockfrost when the backend is offline.
@@ -357,6 +386,11 @@ export default function Home() {
         <p style={{ color: "var(--muted)" }}>No loaded posts match &quot;{query.trim()}&quot;.</p>
       ) : (
         <FeedList posts={visible} network={network()} nowMs={nowMs} offline={offline} />
+      )}
+      {health === "online" && hasMore && (
+        <div style={{ textAlign: "center", marginTop: 12 }}>
+          <button onClick={() => void loadMore()}>Load more</button>
+        </div>
       )}
     </main>
   );

@@ -1,6 +1,7 @@
 package org.wall;
 
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -51,7 +52,7 @@ class WallApiTest {
   @Test
   @DisplayName("GET /api/feed returns recent posts (with tip + pinned)")
   void feed() throws Exception {
-    when(feedReader.recent(anyInt()))
+    when(feedReader.recent(anyInt(), anyInt()))
         .thenReturn(
             List.of(
                 new WallPost(
@@ -85,6 +86,17 @@ class WallApiTest {
         .andExpect(jsonPath("$.maxPinned").value(3))
         .andExpect(jsonPath("$.pinDurationSeconds").value(604800))
         .andExpect(jsonPath("$.palette[0]").value("rose"));
+  }
+
+  @Test
+  @DisplayName("GET /api/feed forwards the page param to the reader")
+  void feedForwardsPage() throws Exception {
+    when(feedReader.recent(eq(20), eq(2)))
+        .thenReturn(List.of(new WallPost("bob", "page two", "2026-06-30T11:00:00Z")));
+
+    mvc.perform(get("/api/feed").param("limit", "20").param("page", "2"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].message").value("page two"));
   }
 
   @Test

@@ -34,13 +34,14 @@ public class BlockfrostFeedReader implements FeedReader {
   }
 
   @Override
-  public List<WallPost> recent(int limit) {
+  public List<WallPost> recent(int limit, int page) {
+    int p = Math.max(1, page);
     try {
       Result<List<MetadataJSONContent>> result =
           backend
               .getMetadataService()
               .getJSONMetadataByLabel(
-                  BigInteger.valueOf(Wall.WALL_LABEL), limit, 1, OrderEnum.desc);
+                  BigInteger.valueOf(Wall.WALL_LABEL), limit, p, OrderEnum.desc);
       if (!result.isSuccessful() || result.getValue() == null) {
         return List.of();
       }

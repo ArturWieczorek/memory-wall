@@ -5,9 +5,9 @@
 ## Current state
 - Status: LIVE + iterating. Core (Ch 00-06) complete and deployed (repo public; UI on GitHub Pages;
   backend runnable from home via a tunnel). Now adding polish/feature chapters from docs/BACKLOG.md:
-  Ch 07 (UX), Ch 08 (verified author identity), Ch 09 (CI + free GitHub security), and Ch 10 (search
-  + precise moderation) DONE. Next up when wanted: stable Tailscale hosting, or bigger backlog items
-  (pagination/indexer, full-history search, images).
+  Ch 07-13 DONE: UX polish, verified author identity, CI + GitHub security, search + precise
+  moderation, fee + pin tier, pin colour palette, pagination. Next up when wanted: stable Tailscale
+  hosting, or the bigger backlog items (indexer for full-history search + global pinning, images).
 - (Historical) Ch 06 adds hardening for public self-hosting from a home box:
   /health + UI status light, CORS, per-IP rate limit, display-side blocklist moderation, a
   Blockfrost read-only fallback when the backend is down, and runtime-configurable backend URL.
@@ -55,6 +55,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 10 | Search + precise moderation | [x] | ch10 | client-side feed search (filterPosts, loaded window only); tx-hash curator moderation (wall.blocked-tx-hashes) alongside the term blocklist |
 | 11 | Fee + pin tier | [x] | ch11 | optional tip-to-post / tip-more-to-pin; scarce+competitive+time-limited pins verified on-chain; /api/config; UI tip field + rules + pinned pastel/badge; stateless (no queue) |
 | 12 | Pin colour palette | [x] | ch12 | payer picks a pastel (fixed 6-colour palette) when pinning; stored on-chain (metadata c), safe-validated on write + read; rendered behind the pin; PinColors + /api/config palette |
+| 13 | Pagination / load more | [x] | ch13 | FeedReader.recent(limit,page) + /api/feed?page; UI "Load more" appends next page (de-duped, short-page hides button). Pins/search act on the loaded window (full-history = indexer, backlog) |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -70,6 +71,14 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-13 - Ch 13 Pagination (load more)
+- FeedReader.recent(limit, page) + default recent(limit)=page 1; BlockfrostFeedReader passes page to
+  the provider; GET /api/feed?limit&page forwards both. UI: PAGE_SIZE=20, loadFeed resets to page 1,
+  "Load more" appends the next page (de-duped by tx hash), button hidden on a short page / when
+  offline. Pins + search still act on the loaded window (full-history pinning/search = indexer,
+  backlog). Tests: backend 41 (feedForwardsPage + two-arg recent stubs), UI 31; typecheck+build green.
+  Tag ch13. This completes the requested "Medium" set (fee+pin, pagination) + the emergent colour work.
+
 ### 2026-07-13 - Ch 12 Pin colour palette
 - Payer picks a pastel from a fixed 6-colour palette (PinColors: rose/mint/sky/lemon/lilac/peach) when
   pinning. Stored on-chain as optional metadata `c`; WallPost gains color (8th field, 7-arg

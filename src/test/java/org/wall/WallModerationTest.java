@@ -27,7 +27,7 @@ class WallModerationTest {
   @Test
   @DisplayName("GET /api/feed hides posts matching the blocklist")
   void feedHidesBlocked() throws Exception {
-    when(feedReader.recent(anyInt()))
+    when(feedReader.recent(anyInt(), anyInt()))
         .thenReturn(
             List.of(
                 new WallPost("alice", "clean post", "2026-06-30T12:01:00Z"),
