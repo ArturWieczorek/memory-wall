@@ -144,6 +144,12 @@ How it behaves (the UI states this to users):
 - When pinning, the poster picks a **pastel colour** (fixed palette) shown behind their post.
 - A pin only appears once its transaction is on-chain and the feed re-reads it (Refresh after ~30s).
 - The **fee address is public** (not a secret) - tips accumulate there; watch it on cardanoscan.
+- **The fee address must be a SEPARATE address from the people posting.** The feed measures a tip as
+  the NET lovelace the fee address received (outputs to it minus inputs it spent), so if you set the
+  fee address to the same wallet you post from, your own change nets out and never counts as a tip -
+  meaning you can never pin your own posts in a solo test. To actually see a pin, tip from a
+  different wallet than the fee address (e.g. a second preprod wallet, or a fresh fee address you do
+  not post from).
 
 ## Keep in mind
 - **Backend must stay running.** If the box or backend goes down, the site shows "offline"; visitors

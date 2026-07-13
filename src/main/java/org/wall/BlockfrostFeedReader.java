@@ -99,7 +99,7 @@ public class BlockfrostFeedReader implements FeedReader {
       Result<TxContentUtxo> res = backend.getTransactionService().getTransactionUtxos(txHash);
       if (res.isSuccessful() && res.getValue() != null) {
         address = firstInputAddress(res.getValue());
-        tip = tipToFeeAddress(res.getValue());
+        tip = netTipToFeeAddress(res.getValue(), props.feeAddress());
       }
     } catch (ApiException e) {
       // best-effort enrichment; leave defaults
@@ -129,23 +129,48 @@ public class BlockfrostFeedReader implements FeedReader {
     return "";
   }
 
-  /** Total lovelace this transaction sent to the operator's fee address (0 if the tier is off). */
-  private long tipToFeeAddress(TxContentUtxo utxo) {
-    String fee = props.feeAddress();
-    if (fee.isBlank() || utxo.getOutputs() == null) {
+  /**
+   * NET lovelace the fee address actually received = lovelace paid TO it (outputs) minus lovelace
+   * it contributed (inputs). This is ~0 for a self-payment (an operator whose fee address is also
+   * the posting wallet - their change returns and nets out, so it is NOT counted as a tip) and the
+   * real amount when a different poster pays. Clamped at 0. Static + package-private for unit
+   * testing.
+   */
+  static long netTipToFeeAddress(TxContentUtxo utxo, String feeAddress) {
+    if (feeAddress == null || feeAddress.isBlank() || utxo == null) {
+      return 0;
+    }
+    long out = 0;
+    if (utxo.getOutputs() != null) {
+      for (TxContentUtxoOutputs o : utxo.getOutputs()) {
+        if (feeAddress.equals(o.getAddress())) {
+          out += lovelaceOf(o.getAmount());
+        }
+      }
+    }
+    long in = 0;
+    if (utxo.getInputs() != null) {
+      for (TxContentUtxoInputs i : utxo.getInputs()) {
+        if (feeAddress.equals(i.getAddress())) {
+          in += lovelaceOf(i.getAmount());
+        }
+      }
+    }
+    return Math.max(0, out - in);
+  }
+
+  /** Sum the lovelace across a list of amounts (ignores native tokens / bad quantities). */
+  private static long lovelaceOf(List<TxContentOutputAmount> amounts) {
+    if (amounts == null) {
       return 0;
     }
     long sum = 0;
-    for (TxContentUtxoOutputs out : utxo.getOutputs()) {
-      if (fee.equals(out.getAddress()) && out.getAmount() != null) {
-        for (TxContentOutputAmount amt : out.getAmount()) {
-          if ("lovelace".equals(amt.getUnit())) {
-            try {
-              sum += Long.parseLong(amt.getQuantity());
-            } catch (NumberFormatException ignore) {
-              // skip a non-numeric quantity
-            }
-          }
+    for (TxContentOutputAmount a : amounts) {
+      if ("lovelace".equals(a.getUnit())) {
+        try {
+          sum += Long.parseLong(a.getQuantity());
+        } catch (NumberFormatException ignore) {
+          // skip a non-numeric quantity
         }
       }
     }
