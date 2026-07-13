@@ -25,13 +25,12 @@
    WALL_CORS_ORIGINS to the Pages URL. Until then the page loads but shows "server offline" (the
    read-from-chain fallback still works if a visitor pastes their own Blockfrost key). The wall runs on
    ONE network per deployment (preprod); the server needs no key/funds - posters use their own wallets.
-2. Images (see docs/future-images.md). 3. dApp/datum version. 4. NFT receipt (CIP-25).
-5. SEARCH posts: quick win = client-side filter over the loaded feed (author/message substring, maybe
-   a date range) - trivial but only the recent window. Full version = search across ALL label-1719
-   history; the provider's by-label endpoint is paginated with no text search, so this needs backend
-   pagination + an index/cache (pairs with item 6). Also runs through the blocklist so hidden posts
-   stay hidden in results.
-6. Pagination/indexer for a large feed. (Otherwise move to portfolio project #3, token-faucet.)
+2. FEATURE ROADMAP -> `docs/BACKLOG.md` is now the single canonical backlog (planned / in progress /
+   done / out-of-scope, with rationale). In flight (2026-07-13): Ch 07 Polish the wall (UX), Ch 08
+   Verified author identity, Ch 09 Keep it healthy (CI + free GitHub security: Dependabot, CodeQL,
+   secret scanning). Decided OUT of scope for this project: NFT receipt (CIP-25) and dApp/datum - they
+   do not serve "post + read messages" and are better taught by other portfolio projects. Images stay
+   deferred (designed in docs/future-images.md; SSRF + legal weight).
 
 ## Chapter status board
 Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
