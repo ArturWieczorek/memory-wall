@@ -66,6 +66,13 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-13 - Dependabot triage
+- First enablement opened 10 PRs, all major bumps (Next 15/16, React 19, Spring Boot 4, Gradle 9,
+  Vitest 4, jsdom 29, spotless 8) - CI flagged the breakers (Spring 4, React 19, Vitest 4). All
+  reverse deliberate pins or are risky; closed all 10. Added ignore rules (gradle + npm:
+  version-update:semver-major for "*") so Dependabot auto-proposes only minor/patch; majors are
+  manual; security updates unaffected. GitHub Actions majors left on (routine).
+
 ### 2026-07-13 - Ch 09 Keep it healthy (CI + free GitHub security)
 - Added .github/workflows/ci.yml (backend: spotlessCheck+test on Java 21; UI: npm ci+typecheck+test+
   build) on push/PR; .github/workflows/codeql.yml (java-kotlin autobuild + javascript-typescript);

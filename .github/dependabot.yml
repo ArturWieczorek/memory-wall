@@ -7,12 +7,24 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Auto-propose only minor/patch bumps. Major versions are deliberate choices here (Spring Boot
+    # 3.5, Gradle 8), taken by hand after evaluation - not auto-merged. Security updates are NOT
+    # affected by this and still open PRs.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: npm # UI (ui/package.json)
     directory: "/ui"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Same policy: minor/patch only. Majors (Next 15/16, React 19, Vitest 4, ...) are deliberate,
+    # manual decisions - several reverse pins we chose on purpose or break the build. Security
+    # updates are unaffected.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions # the workflows in .github/workflows
     directory: "/"

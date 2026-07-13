@@ -52,6 +52,14 @@ We watch all three ecosystems this repo uses: **gradle** (backend), **npm** (`ui
 **github-actions** (the workflows themselves), weekly. Alerts and automatic security-fix PRs are
 turned on in the repo's security settings (see section 6).
 
+**A note on major versions.** On first enablement Dependabot opened ~10 PRs - almost all **major**
+bumps that reverse pins we chose on purpose (Next 14, React 18, Spring Boot 3.5, Gradle 8) or break
+the build (Vitest 4). That is the safety net working (CI flagged the breakers), but it is noise. So we
+tell Dependabot to auto-propose **only minor/patch** updates for the gradle and npm ecosystems
+(`ignore: version-update:semver-major`), and take majors by hand after evaluating them. **Security
+updates are not affected** by this ignore - a vulnerable dependency still gets a PR. GitHub Actions
+majors are left on (they are routine and safe to keep current).
+
 ## 4. CodeQL - scan the code for security bugs (`.github/workflows/codeql.yml`)
 
 **CodeQL** is GitHub's static analysis engine: it reads your source like a security reviewer and flags

@@ -53,7 +53,10 @@ port-forwarding). Full step-by-step guide: **[infra/HOSTING.md](infra/HOSTING.md
 
 In short, with a free preprod Blockfrost key:
 ```bash
-export WALL_BACKEND_PROJECT_ID=preprod...   # your key (secret; never commit)
+# WALL_BACKEND_PROJECT_ID is your Blockfrost project id - a free API key from https://blockfrost.io
+# for a "Cardano Preprod" project. It starts with "preprod". It is a SECRET: env var only, never
+# commit it. (The backend uses it to read the chain and build transactions; it holds no wallet keys.)
+export WALL_BACKEND_PROJECT_ID=preprodXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ./infra/run-backend.sh                       # runs the backend with preprod defaults
 # then expose port 8090 with a tunnel (Cloudflare quick tunnel or Tailscale Funnel)
 # and point ui/public/config.js __WALL_API__ at the tunnel URL (see infra/HOSTING.md).
