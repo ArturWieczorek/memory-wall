@@ -61,7 +61,8 @@ class WallApiTest {
                     "tx123",
                     "addr_test1qalice",
                     5_000_000L,
-                    true)));
+                    true,
+                    "mint")));
 
     mvc.perform(get("/api/feed"))
         .andExpect(status().isOk())
@@ -70,7 +71,8 @@ class WallApiTest {
         .andExpect(jsonPath("$[0].txHash").value("tx123"))
         .andExpect(jsonPath("$[0].address").value("addr_test1qalice"))
         .andExpect(jsonPath("$[0].tipLovelace").value(5_000_000))
-        .andExpect(jsonPath("$[0].pinned").value(true));
+        .andExpect(jsonPath("$[0].pinned").value(true))
+        .andExpect(jsonPath("$[0].color").value("mint"));
   }
 
   @Test
@@ -81,7 +83,8 @@ class WallApiTest {
         .andExpect(jsonPath("$.feeEnabled").value(false))
         .andExpect(jsonPath("$.minFeeLovelace").value(0))
         .andExpect(jsonPath("$.maxPinned").value(3))
-        .andExpect(jsonPath("$.pinDurationSeconds").value(604800));
+        .andExpect(jsonPath("$.pinDurationSeconds").value(604800))
+        .andExpect(jsonPath("$.palette[0]").value("rose"));
   }
 
   @Test

@@ -9,6 +9,7 @@ import {
   filterPosts,
   lovelaceToAda,
   adaToLovelace,
+  pinColorBg,
   resolveInitialTheme,
   nextTheme,
   MAX_MESSAGE_BYTES,
@@ -23,6 +24,7 @@ const mkPost = (over: Partial<Post> = {}): Post => ({
   address: "",
   tipLovelace: 0,
   pinned: false,
+  color: "",
   ...over,
 });
 
@@ -110,6 +112,7 @@ describe("rowToPost", () => {
       address: "",
       tipLovelace: 0,
       pinned: false,
+      color: "",
     });
   });
   it("accepts a plain string message and a missing tx hash (address stays empty here)", () => {
@@ -122,6 +125,7 @@ describe("rowToPost", () => {
       address: "",
       tipLovelace: 0,
       pinned: false,
+      color: "",
     });
   });
   it("returns null for malformed rows", () => {
@@ -161,6 +165,19 @@ describe("ADA / lovelace helpers", () => {
     expect(adaToLovelace(5)).toBe(5_000_000);
     expect(adaToLovelace(1.5)).toBe(1_500_000);
     expect(adaToLovelace(0)).toBe(0);
+  });
+});
+
+describe("pin colour", () => {
+  it("maps a palette colour to its CSS var, else the default pin pastel", () => {
+    expect(pinColorBg("mint")).toBe("var(--pin-mint)");
+    expect(pinColorBg("chartreuse")).toBe("var(--pin-bg)");
+    expect(pinColorBg("")).toBe("var(--pin-bg)");
+  });
+  it("rowToPost keeps a palette colour and drops a non-palette one", () => {
+    const ts = "2026-07-13T12:00:00Z";
+    expect(rowToPost({ json_metadata: { m: "hi", ts, c: "mint" } })?.color).toBe("mint");
+    expect(rowToPost({ json_metadata: { m: "hi", ts, c: "chartreuse" } })?.color).toBe("");
   });
 });
 

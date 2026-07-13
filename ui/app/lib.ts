@@ -9,6 +9,7 @@ export type Post = {
   address: string;
   tipLovelace: number;
   pinned: boolean;
+  color: string;
 };
 
 /** Fee/pin tier config the backend exposes at /api/config so the UI can render and explain it. */
@@ -18,7 +19,21 @@ export type WallConfig = {
   pinFeeLovelace: number;
   maxPinned: number;
   pinDurationSeconds: number;
+  palette: string[];
 };
+
+/** The fixed pin-colour palette (mirrors the backend's PinColors). */
+export const PIN_PALETTE = ["rose", "mint", "sky", "lemon", "lilac", "peach"];
+
+/** A palette code, or "" for anything not in the palette (defensive against arbitrary on-chain values). */
+export function normalizePinColor(code: string): string {
+  return PIN_PALETTE.includes(code) ? code : "";
+}
+
+/** CSS background for a pinned post's colour: a per-colour pastel var, or the default pin pastel. */
+export function pinColorBg(code: string): string {
+  return PIN_PALETTE.includes(code) ? `var(--pin-${code})` : "var(--pin-bg)";
+}
 
 /** Lovelace -> ADA string (1 ADA = 1,000,000 lovelace), trimming trailing zeros. */
 export function lovelaceToAda(lovelace: number): string {
@@ -99,10 +114,11 @@ export function rowToPost(row: { tx_hash?: unknown; json_metadata?: unknown }): 
       : "";
   const timestamp = typeof j.ts === "string" ? j.ts : "";
   const txHash = typeof row?.tx_hash === "string" ? row.tx_hash : "";
+  const color = normalizePinColor(typeof j.c === "string" ? j.c : "");
   if (!message || !timestamp) return null;
   // The chain read-fallback has no cheap way to fetch the payer address or tip, so those stay empty
   // here (the UI simply omits the verified chip and pin styling); the backend feed fills them in.
-  return { author, message, timestamp, txHash, address: "", tipLovelace: 0, pinned: false };
+  return { author, message, timestamp, txHash, address: "", tipLovelace: 0, pinned: false, color };
 }
 
 /**

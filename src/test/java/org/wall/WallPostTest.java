@@ -67,4 +67,12 @@ class WallPostTest {
     assertThat(tipped.tipLovelace()).isEqualTo(5_000_000L);
     assertThat(tipped.pinned()).isTrue();
   }
+
+  @Test
+  @DisplayName("carries an optional pin colour, defaulting to empty")
+  void color() {
+    assertThat(new WallPost("a", "hi", "2026-06-30T12:00:00Z").color()).isEmpty();
+    WallPost c = new WallPost("a", "hi", "2026-06-30T12:00:00Z", "tx", "addr", 0L, false, "mint");
+    assertThat(c.color()).isEqualTo("mint");
+  }
 }

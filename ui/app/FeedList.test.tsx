@@ -15,6 +15,7 @@ const post = (over: Partial<Post> = {}): Post => ({
   address: ADDR,
   tipLovelace: 0,
   pinned: false,
+  color: "",
   ...over,
 });
 

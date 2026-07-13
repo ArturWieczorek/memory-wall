@@ -11,10 +11,17 @@
   --input-bg: #ffffff;
   --input-border: #cbd5e1;
   --chip-bg: #f1f5f9;
-  --pin-bg: #fff7ed; /* soft pastel highlight for pinned posts */
+  --pin-bg: #fff7ed; /* soft pastel highlight for pinned posts (default) */
   --pin-border: #fed7aa;
   --pin-badge: #f59e0b;
   --pin-badge-fg: #1a1a1a;
+  /* payer-chosen pin pastels (light) */
+  --pin-rose: #ffe4e6;
+  --pin-mint: #dcfce7;
+  --pin-sky: #e0f2fe;
+  --pin-lemon: #fef9c3;
+  --pin-lilac: #ede9fe;
+  --pin-peach: #ffedd5;
 }
 :root[data-theme="dark"] {
   --bg: #0f1115;
@@ -27,10 +34,17 @@
   --input-bg: #11151c;
   --input-border: #2b323c;
   --chip-bg: #1b2029;
-  --pin-bg: #2a2113; /* soft pastel highlight for pinned posts (dark) */
+  --pin-bg: #2a2113; /* soft pastel highlight for pinned posts (dark, default) */
   --pin-border: #7c5312;
   --pin-badge: #f59e0b;
   --pin-badge-fg: #1a1a1a;
+  /* payer-chosen pin pastels (dark) */
+  --pin-rose: #4a1d24;
+  --pin-mint: #113a24;
+  --pin-sky: #10314a;
+  --pin-lemon: #3f3a12;
+  --pin-lilac: #2c2450;
+  --pin-peach: #4a2f14;
 }
 
 body {

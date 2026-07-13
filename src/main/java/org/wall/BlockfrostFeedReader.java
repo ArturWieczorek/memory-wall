@@ -77,7 +77,9 @@ public class BlockfrostFeedReader implements FeedReader {
       if (message.isEmpty() || ts.isBlank()) {
         return null;
       }
-      return new WallPost(author, message.toString(), ts, txHash == null ? "" : txHash);
+      String color = PinColors.normalize(node.path("c").asText(""));
+      return new WallPost(
+          author, message.toString(), ts, txHash == null ? "" : txHash, "", 0L, false, color);
     } catch (RuntimeException e) {
       return null; // skip anything that does not look like one of our posts
     }
@@ -104,7 +106,14 @@ public class BlockfrostFeedReader implements FeedReader {
     boolean pinned =
         props.feeEnabled() && props.pinFeeLovelace() > 0 && tip >= props.pinFeeLovelace();
     return new WallPost(
-        post.author(), post.message(), post.timestamp(), txHash, address, tip, pinned);
+        post.author(),
+        post.message(),
+        post.timestamp(),
+        txHash,
+        address,
+        tip,
+        pinned,
+        post.color());
   }
 
   /** The first input's address - who funded (and therefore signed) the transaction. */

@@ -59,7 +59,8 @@ public class WallController {
       long minFeeLovelace,
       long pinFeeLovelace,
       int maxPinned,
-      long pinDurationSeconds) {}
+      long pinDurationSeconds,
+      List<String> palette) {}
 
   @GetMapping("/config")
   public ConfigResponse config() {
@@ -68,7 +69,8 @@ public class WallController {
         props.minFeeLovelace(),
         props.pinFeeLovelace(),
         props.maxPinned(),
-        props.pinDurationSeconds());
+        props.pinDurationSeconds(),
+        PinColors.PALETTE);
   }
 
   @GetMapping("/feed")
@@ -81,7 +83,8 @@ public class WallController {
    * Request to build a post tx: who pays/signs (address), the display name, the message, and an
    * optional tip (lovelace) to the operator's fee address when the fee tier is on.
    */
-  public record BuildRequest(String address, String author, String message, Long tipLovelace) {}
+  public record BuildRequest(
+      String address, String author, String message, Long tipLovelace, String color) {}
 
   /** Response carrying the unsigned transaction CBOR for the wallet to sign. */
   public record BuildResponse(String txCbor) {}
@@ -108,7 +111,9 @@ public class WallController {
       }
     }
     String author = req.author() == null ? "" : req.author();
-    WallPost post = WallPost.create(author, req.message(), Instant.now());
+    String color = PinColors.normalize(req.color());
+    WallPost post =
+        new WallPost(author, req.message(), Instant.now().toString(), "", "", 0L, false, color);
     return ResponseEntity.ok(
         new BuildResponse(txBuilder.buildUnsignedHex(req.address(), post, tip)));
   }

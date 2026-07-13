@@ -6,6 +6,7 @@ import {
   byteLength,
   filterPosts,
   lovelaceToAda,
+  pinColorBg,
   MAX_MESSAGE_BYTES,
   nextTheme,
   resolveInitialTheme,
@@ -36,6 +37,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [config, setConfig] = useState<WallConfig | null>(null);
   const [tipAda, setTipAda] = useState("");
+  const [pinColor, setPinColor] = useState("");
 
   // Fetch the fee/pin tier config once, so we know whether to show the tip field + rules.
   async function loadConfig() {
@@ -147,6 +149,7 @@ export default function Home() {
       setStatus("Building transaction...");
       const body: Record<string, unknown> = { address, author, message };
       if (config?.feeEnabled) body.tipLovelace = adaToLovelace(Number(tipAda) || 0);
+      if (config?.feeEnabled && pinColor) body.color = pinColor;
       const built = await fetch(`${apiBase()}/api/posts/build`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -276,6 +279,28 @@ export default function Home() {
               bump a smaller one. The tip is paid on-chain to the wall.
               {belowMin ? " (Your tip is below the minimum.)" : ""}
             </div>
+            {willPin && config.palette.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+                <span style={{ color: "var(--muted)" }}>pin colour:</span>
+                {config.palette.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setPinColor(c)}
+                    title={c}
+                    aria-label={`pin colour ${c}`}
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: "50%",
+                      background: pinColorBg(c),
+                      border: pinColor === c ? "2px solid var(--fg)" : "1px solid var(--border)",
+                      padding: 0,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -73,6 +73,13 @@ public final class Feed {
   /** A copy of {@code p} with {@code pinned=false} (missed a slot, or its window expired). */
   private static WallPost demote(WallPost p) {
     return new WallPost(
-        p.author(), p.message(), p.timestamp(), p.txHash(), p.address(), p.tipLovelace(), false);
+        p.author(),
+        p.message(),
+        p.timestamp(),
+        p.txHash(),
+        p.address(),
+        p.tipLovelace(),
+        false,
+        p.color());
   }
 }

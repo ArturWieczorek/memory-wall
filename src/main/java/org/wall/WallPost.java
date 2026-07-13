@@ -18,6 +18,8 @@ import java.time.Instant;
  *     0 if none or the fee tier is off)
  * @param pinned whether the tip reached the pin threshold, so the post is shown first (verified
  *     from the on-chain payment, not self-declared)
+ * @param color optional pin-colour code from the fixed palette ({@link PinColors}); empty =
+ *     default. Cosmetic and only applied when the post is pinned
  */
 public record WallPost(
     String author,
@@ -26,7 +28,8 @@ public record WallPost(
     String txHash,
     String address,
     long tipLovelace,
-    boolean pinned) {
+    boolean pinned,
+    String color) {
 
   /** Cardano caps a single metadata text value at 64 bytes; the author must fit in one. */
   public static final int MAX_AUTHOR_BYTES = 64;
@@ -35,6 +38,7 @@ public record WallPost(
     author = author == null ? "" : author;
     txHash = txHash == null ? "" : txHash;
     address = address == null ? "" : address;
+    color = color == null ? "" : color;
     if (tipLovelace < 0) {
       tipLovelace = 0;
     }
@@ -51,17 +55,29 @@ public record WallPost(
 
   /** A post without a known transaction hash or address yet (e.g. while building, or in tests). */
   public WallPost(String author, String message, String timestamp) {
-    this(author, message, timestamp, "", "", 0L, false);
+    this(author, message, timestamp, "", "", 0L, false, "");
   }
 
   /** A post with a tx hash but no resolved payer address. */
   public WallPost(String author, String message, String timestamp, String txHash) {
-    this(author, message, timestamp, txHash, "", 0L, false);
+    this(author, message, timestamp, txHash, "", 0L, false, "");
   }
 
   /** A post with a tx hash and payer address but no tip/pin info (e.g. the read fallback). */
   public WallPost(String author, String message, String timestamp, String txHash, String address) {
-    this(author, message, timestamp, txHash, address, 0L, false);
+    this(author, message, timestamp, txHash, address, 0L, false, "");
+  }
+
+  /** A post with tip/pin info but no chosen colour. */
+  public WallPost(
+      String author,
+      String message,
+      String timestamp,
+      String txHash,
+      String address,
+      long tipLovelace,
+      boolean pinned) {
+    this(author, message, timestamp, txHash, address, tipLovelace, pinned, "");
   }
 
   /** A post stamped at {@code when} (supplied for testability). */

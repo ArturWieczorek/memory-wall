@@ -2,6 +2,7 @@ import {
   explorerAddrUrl,
   explorerTxUrl,
   lovelaceToAda,
+  pinColorBg,
   relativeTime,
   shortenAddress,
   type Post,
@@ -37,7 +38,7 @@ export function FeedList({
           style={
             p.pinned
               ? {
-                  background: "var(--pin-bg)",
+                  background: pinColorBg(p.color),
                   border: "1px solid var(--pin-border)",
                   borderRadius: 8,
                   padding: "8px 10px",

@@ -21,6 +21,14 @@ class FeedAndParseTest {
   }
 
   @Test
+  @DisplayName("a pin colour round-trips through metadata (the 'c' field)")
+  void colorRoundTrip() {
+    WallPost coloured =
+        new WallPost("carol", "hi", "2026-06-30T10:00:00Z", "", "", 0L, false, "mint");
+    assertThat(Wall.parsePost(Wall.postMap(coloured)).color()).isEqualTo("mint");
+  }
+
+  @Test
   @DisplayName("the feed lists posts newest-first")
   void newestFirst() {
     WallPost older = new WallPost("a", "first", "2026-06-30T10:00:00Z");

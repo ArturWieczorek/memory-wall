@@ -53,7 +53,8 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 08 | Verified author identity | [x] | ch08 | payer address read from tx input (WallPost.address); feed shows name (claimed) + verified short-address chip; privacy + N+1 cost documented |
 | 09 | Keep it healthy (CI + free GitHub security) | [x] | ch09 | CI (backend+UI), Dependabot (3 ecosystems), CodeQL (java+ts), secret scanning + push protection, action bumps, MIT LICENSE |
 | 10 | Search + precise moderation | [x] | ch10 | client-side feed search (filterPosts, loaded window only); tx-hash curator moderation (wall.blocked-tx-hashes) alongside the term blocklist |
-| 11 | Fee + pin tier | [x] | ch11 | optional tip-to-post / tip-more-to-pin; scarce+competitive+time-limited pins verified on-chain; /api/config; UI tip field + rules + pinned pastel/badge; stateless (no queue). Payer palette color deferred to ch12 |
+| 11 | Fee + pin tier | [x] | ch11 | optional tip-to-post / tip-more-to-pin; scarce+competitive+time-limited pins verified on-chain; /api/config; UI tip field + rules + pinned pastel/badge; stateless (no queue) |
+| 12 | Pin colour palette | [x] | ch12 | payer picks a pastel (fixed 6-colour palette) when pinning; stored on-chain (metadata c), safe-validated on write + read; rendered behind the pin; PinColors + /api/config palette |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -69,6 +70,16 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-13 - Ch 12 Pin colour palette
+- Payer picks a pastel from a fixed 6-colour palette (PinColors: rose/mint/sky/lemon/lilac/peach) when
+  pinning. Stored on-chain as optional metadata `c`; WallPost gains color (8th field, 7-arg
+  convenience ctor keeps callers compiling). Safe-validated (PinColors.normalize) on write
+  (/posts/build) AND on read (feed reader + rowToPost) - defends against arbitrary on-chain values.
+  /api/config exposes the palette. UI: colour swatches shown when the tip will pin; pinned posts get
+  their colour's pastel (theme-aware light/dark), default pastel if none.
+- Tests: backend 40 (PinColorsTest + color round-trip + feed JSON color + config palette), UI 31
+  (pinColorBg + rowToPost colour). typecheck + build green. Tag ch12. Pagination is next (ch13).
+
 ### 2026-07-13 - Ch 11 Fee + pin tier
 - Optional fee/pin tier (OFF by default; on when wall.fee-address set). Backend: WallProperties gains
   feeAddress/minFeeLovelace/pinFeeLovelace/maxPinned(3)/pinDurationSeconds(7d). PostTxBuilder adds a

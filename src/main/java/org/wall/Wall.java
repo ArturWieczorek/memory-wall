@@ -63,6 +63,9 @@ public final class Wall {
     map.put("a", post.author());
     map.put("m", messageChunks);
     map.put("ts", post.timestamp());
+    if (post.color() != null && !post.color().isBlank()) {
+      map.put("c", post.color()); // optional pin colour (from the fixed palette)
+    }
     return map;
   }
 
@@ -84,7 +87,16 @@ public final class Wall {
     for (int i = 0; i < chunks.size(); i++) {
       message.append(String.valueOf(chunks.getValueAt(i)));
     }
+    Object c = map.get("c");
+    String color = c == null ? "" : PinColors.normalize(String.valueOf(c));
     return new WallPost(
-        String.valueOf(map.get("a")), message.toString(), String.valueOf(map.get("ts")));
+        String.valueOf(map.get("a")),
+        message.toString(),
+        String.valueOf(map.get("ts")),
+        "",
+        "",
+        0L,
+        false,
+        color);
   }
 }
