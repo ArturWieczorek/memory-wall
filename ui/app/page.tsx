@@ -187,26 +187,28 @@ export default function Home() {
         {status && <p>{status}</p>}
       </section>
 
-      <details style={{ marginBottom: 16 }}>
-        <summary style={{ cursor: "pointer", fontSize: 13 }}>
-          Read posts directly from the chain (optional Blockfrost key)
-        </summary>
-        <p style={{ fontSize: 13, opacity: 0.8 }}>
-          Used automatically when the server is offline. Your key is your own, read-only, and never
-          sent anywhere except Blockfrost from your browser. Network: {network()}.
-        </p>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input
-            style={{ flex: 1 }}
-            placeholder={network() + "XXXXXXXXXXXXXXXX"}
-            value={bfKey}
-            onChange={(e) => setBfKey(e.target.value)}
-          />
-          <button onClick={() => void loadFeedFromChain()} disabled={!bfKey.trim()}>
-            Load from chain
-          </button>
-        </div>
-      </details>
+      {offline && (
+        <details style={{ marginBottom: 16 }}>
+          <summary style={{ cursor: "pointer", fontSize: 13 }}>
+            Read posts directly from the chain (optional Blockfrost key)
+          </summary>
+          <p style={{ fontSize: 13, opacity: 0.8 }}>
+            Used automatically when the server is offline. Your key is your own, read-only, and never
+            sent anywhere except Blockfrost from your browser. Network: {network()}.
+          </p>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input
+              style={{ flex: 1 }}
+              placeholder={network() + "XXXXXXXXXXXXXXXX"}
+              value={bfKey}
+              onChange={(e) => setBfKey(e.target.value)}
+            />
+            <button onClick={() => void loadFeedFromChain()} disabled={!bfKey.trim()}>
+              Load from chain
+            </button>
+          </div>
+        </details>
+      )}
 
       <h2>The wall</h2>
       <ul style={{ listStyle: "none", padding: 0 }}>
