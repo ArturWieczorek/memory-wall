@@ -25,6 +25,9 @@ wall:
   # Display-side moderation: comma-separated terms; a post whose author or message contains one is
   # hidden from the feed (it is still permanent on-chain - we just do not show it).
   blocklist: ${WALL_BLOCKLIST:}
+  # Curator moderation: comma-separated transaction hashes to hide exactly (a precise "hide this one
+  # post" lever). Also display-side only - the post stays permanent on-chain.
+  blocked-tx-hashes: ${WALL_BLOCKED_TX_HASHES:}
 
 server:
   port: ${WALL_PORT:8090}

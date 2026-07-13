@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   byteLength,
+  filterPosts,
   MAX_MESSAGE_BYTES,
   nextTheme,
   resolveInitialTheme,
@@ -29,6 +30,7 @@ export default function Home() {
   const [health, setHealth] = useState<Health>("checking");
   const [bfKey, setBfKey] = useState("");
   const [theme, setTheme] = useState<Theme>("light");
+  const [query, setQuery] = useState("");
 
   // Poll the backend's health so we can show an online/offline light and disable posting when down.
   async function probe(): Promise<boolean> {
@@ -161,6 +163,7 @@ export default function Home() {
   const bytes = byteLength(message);
   const overLimit = bytes > MAX_MESSAGE_BYTES;
   const nowMs = Date.now();
+  const visible = filterPosts(feed, query);
 
   return (
     <main>
@@ -240,7 +243,27 @@ export default function Home() {
       )}
 
       <h2>The wall</h2>
-      <FeedList posts={feed} network={network()} nowMs={nowMs} offline={offline} />
+      {feed.length > 0 && (
+        <div style={{ margin: "4px 0 12px" }}>
+          <input
+            style={{ width: "100%" }}
+            placeholder="Search the loaded posts (author or message)..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {query.trim() && (
+            <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
+              {visible.length} of {feed.length} loaded posts match. Searches only the loaded window,
+              not the full history.
+            </div>
+          )}
+        </div>
+      )}
+      {query.trim() && visible.length === 0 && feed.length > 0 ? (
+        <p style={{ color: "var(--muted)" }}>No loaded posts match &quot;{query.trim()}&quot;.</p>
+      ) : (
+        <FeedList posts={visible} network={network()} nowMs={nowMs} offline={offline} />
+      )}
     </main>
   );
 }

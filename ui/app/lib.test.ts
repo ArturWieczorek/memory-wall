@@ -6,10 +6,21 @@ import {
   shortenAddress,
   relativeTime,
   rowToPost,
+  filterPosts,
   resolveInitialTheme,
   nextTheme,
   MAX_MESSAGE_BYTES,
+  type Post,
 } from "./lib";
+
+const mkPost = (over: Partial<Post> = {}): Post => ({
+  author: "Ada",
+  message: "gm cardano",
+  timestamp: "2026-07-13T12:00:00Z",
+  txHash: "tx",
+  address: "",
+  ...over,
+});
 
 describe("byteLength", () => {
   it("counts ASCII as one byte each", () => {
@@ -110,6 +121,25 @@ describe("rowToPost", () => {
     expect(rowToPost({ json_metadata: { m: "hi" } })).toBeNull(); // no timestamp
     expect(rowToPost({ json_metadata: "nope" })).toBeNull(); // not an object
     expect(rowToPost({})).toBeNull(); // no metadata
+  });
+});
+
+describe("filterPosts", () => {
+  const posts = [
+    mkPost({ author: "Ada", message: "gm cardano" }),
+    mkPost({ author: "Bob", message: "hello world" }),
+    mkPost({ author: "", message: "CARDANO rocks" }),
+  ];
+  it("returns all posts for an empty/blank query", () => {
+    expect(filterPosts(posts, "")).toHaveLength(3);
+    expect(filterPosts(posts, "   ")).toHaveLength(3);
+  });
+  it("matches case-insensitively across author and message", () => {
+    expect(filterPosts(posts, "cardano").map((p) => p.author)).toEqual(["Ada", ""]);
+    expect(filterPosts(posts, "BOB")).toHaveLength(1);
+  });
+  it("returns none when nothing matches", () => {
+    expect(filterPosts(posts, "zzz")).toHaveLength(0);
   });
 });
 

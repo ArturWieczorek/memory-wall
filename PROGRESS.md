@@ -5,8 +5,9 @@
 ## Current state
 - Status: LIVE + iterating. Core (Ch 00-06) complete and deployed (repo public; UI on GitHub Pages;
   backend runnable from home via a tunnel). Now adding polish/feature chapters from docs/BACKLOG.md:
-  Ch 07 (UX), Ch 08 (verified author identity), and Ch 09 (CI + free GitHub security) DONE. Next up
-  when wanted: stable Tailscale hosting, or backlog items (search, pagination/indexer, images).
+  Ch 07 (UX), Ch 08 (verified author identity), Ch 09 (CI + free GitHub security), and Ch 10 (search
+  + precise moderation) DONE. Next up when wanted: stable Tailscale hosting, or bigger backlog items
+  (pagination/indexer, full-history search, images).
 - (Historical) Ch 06 adds hardening for public self-hosting from a home box:
   /health + UI status light, CORS, per-IP rate limit, display-side blocklist moderation, a
   Blockfrost read-only fallback when the backend is down, and runtime-configurable backend URL.
@@ -51,6 +52,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 07 | Polish the wall (UX + UI tests) | [x] | ch07 | dark/light theme, time-ago, byte counter, view-tx link, network label, empty state; Vitest+RTL (19 UI tests); WallPost.txHash |
 | 08 | Verified author identity | [x] | ch08 | payer address read from tx input (WallPost.address); feed shows name (claimed) + verified short-address chip; privacy + N+1 cost documented |
 | 09 | Keep it healthy (CI + free GitHub security) | [x] | ch09 | CI (backend+UI), Dependabot (3 ecosystems), CodeQL (java+ts), secret scanning + push protection, action bumps, MIT LICENSE |
+| 10 | Search + precise moderation | [x] | ch10 | client-side feed search (filterPosts, loaded window only); tx-hash curator moderation (wall.blocked-tx-hashes) alongside the term blocklist |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -66,6 +68,15 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-13 - Ch 10 Search + precise moderation (small wins)
+- UI: lib.filterPosts (case-insensitive author/message substring over the LOADED window only - labelled
+  as such); search box + "N of M loaded match" hint + no-match state in page.tsx. 3 new lib tests (UI 26).
+- Backend: tx-hash curator moderation - WallProperties.blockedTxHashes (env WALL_BLOCKED_TX_HASHES),
+  Blocklist hides a post whose txHash is listed (exact, case-insensitive) alongside the term blocklist.
+  2 new BlocklistTest cases (backend 30). application.yml wall.blocked-tx-hashes added.
+- Both display-side/permissionless-aware (search is client-only; moderation cannot erase on-chain).
+  Full-history search still needs an indexer (backlog). Tag ch10.
+
 ### 2026-07-13 - Dependabot triage
 - First enablement opened 10 PRs, all major bumps (Next 15/16, React 19, Spring Boot 4, Gradle 9,
   Vitest 4, jsdom 29, spotless 8) - CI flagged the breakers (Spring 4, React 19, Vitest 4). All

@@ -83,6 +83,17 @@ export function rowToPost(row: { tx_hash?: unknown; json_metadata?: unknown }): 
   return { author, message, timestamp, txHash, address: "" };
 }
 
+/**
+ * Filter the loaded feed by a case-insensitive substring over author + message. An empty/blank query
+ * returns all posts. NOTE: this only searches the posts already loaded (the recent window), not the
+ * full on-chain history - see docs/BACKLOG.md (full-history search needs an indexer).
+ */
+export function filterPosts(posts: Post[], query: string): Post[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return posts;
+  return posts.filter((p) => (p.author + " " + p.message).toLowerCase().includes(q));
+}
+
 // --- theme (light/dark) ---------------------------------------------------------------------------
 
 export type Theme = "light" | "dark";

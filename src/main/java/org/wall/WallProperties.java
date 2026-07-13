@@ -15,6 +15,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param rateLimit per-IP request cap that protects the (home-hosted) box from abuse
  * @param blocklist case-insensitive substrings; a post whose author or message contains one is
  *     hidden from the feed (display-side moderation - it cannot remove anything from the chain)
+ * @param blockedTxHashes exact transaction hashes to hide from the feed - a curator's precise "hide
+ *     this one post" lever (also display-side; the post stays permanent on-chain)
  * @param maxMessageBytes reject a post whose message exceeds this many UTF-8 bytes (anti-DoS)
  * @param maxTxChars reject a submit whose txCbor/witness hex exceeds this many characters
  *     (anti-DoS)
@@ -26,6 +28,7 @@ public record WallProperties(
     List<String> corsAllowedOrigins,
     RateLimit rateLimit,
     List<String> blocklist,
+    List<String> blockedTxHashes,
     Integer maxMessageBytes,
     Integer maxTxChars) {
 
@@ -38,6 +41,7 @@ public record WallProperties(
             : List.copyOf(corsAllowedOrigins);
     rateLimit = rateLimit == null ? new RateLimit(true, 20, "") : rateLimit;
     blocklist = blocklist == null ? List.of() : List.copyOf(blocklist);
+    blockedTxHashes = blockedTxHashes == null ? List.of() : List.copyOf(blockedTxHashes);
     maxMessageBytes = (maxMessageBytes == null || maxMessageBytes <= 0) ? 4096 : maxMessageBytes;
     maxTxChars = (maxTxChars == null || maxTxChars <= 0) ? 100_000 : maxTxChars;
   }

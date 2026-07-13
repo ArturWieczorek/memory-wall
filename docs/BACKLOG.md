@@ -48,11 +48,11 @@ These are the three areas chosen on 2026-07-13 (tiers B, C, and D-minus-systemd 
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Client-side search/filter | `[ ]` | Trivial filter over the loaded feed (author/message substring). Cheap win; only covers the recent window. |
+| Client-side search/filter | `[x]` (ch10) | `filterPosts` over the loaded feed (author/message substring); search box + "N of M" hint + no-match state. Recent window only (labelled as such in the UI). |
 | Full-history search | `[ ]` | Needs an indexer/cache (pairs with pagination). Provider by-label endpoint has no text search. |
 | Pagination / "load more" | `[ ]` | The feed is one label query (recent ~20). A large wall needs pagination + an indexer. |
 | Fee + pin tier | `[ ]` | Require a post to pay >= X to a fee address; higher fee pins it. Backend-enforceable when building (no contract needed). Spam economics for a busy wall. |
-| Tx-hash curator moderation | `[ ]` | Hide by tx hash (today's blocklist matches author/message terms only). Small extension of `Blocklist`. |
+| Tx-hash curator moderation | `[x]` (ch10) | `wall.blocked-tx-hashes` hides an exact post by tx hash (scalpel), alongside the term blocklist (broad brush). Display-side only. |
 | Stable public hosting | `[~]` | Quick Cloudflare tunnel working; Tailscale Funnel for a stable URL is the next hosting step (`infra/HOSTING.md`). |
 
 ## Deferred - designed, held back on purpose
