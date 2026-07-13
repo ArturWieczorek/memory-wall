@@ -118,6 +118,33 @@ git add ui/public/config.js && git commit -m "config: point UI at the tunnel" &&
 3. Open https://arturwieczorek.github.io/memory-wall/ -> the status light should be **green** ->
    connect wallet -> write a message -> **Post to the wall** -> it appears in the feed.
 
+## Optional: turn on the fee / pin tier
+
+By default the wall is free (no fee tier). To let posters **tip to post** and **tip more to pin** a
+post to the top (Chapters 11-13), set a **fee address** you control plus the thresholds. Amounts are
+in **lovelace** (1 ADA = 1,000,000).
+
+```bash
+export WALL_BACKEND_PROJECT_ID=preprod...          # your Blockfrost key (secret, as usual)
+WALL_BACKEND_URL=https://cardano-preprod.blockfrost.io/api/v0/ \
+WALL_CORS_ORIGINS=https://arturwieczorek.github.io \
+WALL_FEE_ADDRESS=addr_test1...your_preprod_address \  # where tips land; a PUBLIC address you own
+WALL_MIN_FEE_LOVELACE=2000000 \                        # 2 ADA to post
+WALL_PIN_FEE_LOVELACE=5000000 \                        # 5 ADA to pin
+./gradlew run     # or ./infra/run-backend.sh with the same WALL_FEE_* exported
+```
+Optional (defaults shown): `WALL_MAX_PINNED=3` (pin slots), `WALL_PIN_DURATION_SECONDS=604800` (7-day
+pin window). Verify with `curl http://127.0.0.1:8090/api/config` -> `feeEnabled:true`.
+
+How it behaves (the UI states this to users):
+- Posting requires a tip >= min; tipping >= pin-fee pins the post. Pins are **scarce** (max-pinned
+  slots), **competitive** (highest tips win, a bigger tip can bump a smaller one), and **time-limited**
+  (revert after the window). Everything is **verified on-chain** - the feed reads the actual lovelace
+  paid to the fee address, so a pin cannot be faked.
+- When pinning, the poster picks a **pastel colour** (fixed palette) shown behind their post.
+- A pin only appears once its transaction is on-chain and the feed re-reads it (Refresh after ~30s).
+- The **fee address is public** (not a secret) - tips accumulate there; watch it on cardanoscan.
+
 ## Keep in mind
 - **Backend must stay running.** If the box or backend goes down, the site shows "offline"; visitors
   can still *read* by pasting their own Blockfrost key (the read-only chain fallback).

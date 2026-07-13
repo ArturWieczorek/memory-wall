@@ -101,6 +101,10 @@ export WALL_BACKEND_PROJECT_ID=preprodXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # and point ui/public/config.js __WALL_API__ at the tunnel URL (see infra/HOSTING.md).
 ```
 
+**Optional fee / pin tier** (off by default): set `WALL_FEE_ADDRESS` (+ `WALL_MIN_FEE_LOVELACE` /
+`WALL_PIN_FEE_LOVELACE`) to let posters tip to post and tip more to pin a post to the top, with a
+payer-chosen pastel colour. Full instructions: **[infra/HOSTING.md](infra/HOSTING.md)**.
+
 ## Post without this app (the format is open)
 
 Because a post is just label-1719 metadata, you can write one from **any metadata-capable wallet**

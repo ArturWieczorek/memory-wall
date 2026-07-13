@@ -10,6 +10,13 @@
 # Everything else has a sensible default for the public preprod wall; override any of them by
 # exporting the matching variable before running. The server binds to localhost only - expose it to
 # the internet with a tunnel (see infra/HOSTING.md), never by opening a port on your router.
+#
+# OPTIONAL fee/pin tier (off by default). Export these before running to turn it on:
+#   WALL_FEE_ADDRESS=addr_test1...   a PUBLIC address you own; tips land there (turns the tier on)
+#   WALL_MIN_FEE_LOVELACE=2000000    minimum tip to post (lovelace; 1 ADA = 1,000,000)
+#   WALL_PIN_FEE_LOVELACE=5000000    tip at/above which a post is pinned
+#   WALL_MAX_PINNED=3                pin slots (optional)   WALL_PIN_DURATION_SECONDS=604800  (7 days)
+# See infra/HOSTING.md ("Optional: turn on the fee / pin tier") for what to expect.
 set -euo pipefail
 
 # --- required: the provider key (a secret; never commit it) ---------------------------------------
