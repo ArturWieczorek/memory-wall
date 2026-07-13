@@ -14,7 +14,7 @@ java {
 
 dependencies {
     // Spring Boot backend (BOM-managed; web + test starters only).
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.16"))
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:4.1.0"))
     implementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     // Align the JUnit Platform launcher with the (newer) JUnit the Boot 3.5 BOM pulls in;
