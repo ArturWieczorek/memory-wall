@@ -26,11 +26,12 @@ These are the three areas chosen on 2026-07-13 (tiers B, C, and D-minus-systemd 
 | 07.6 | UI test setup (Vitest + RTL) | `[x]` | Added Vitest + RTL + jsdom; `npm test`. 19 UI tests (lib + FeedList). |
 | 07.7 | Dark/light theme toggle | `[x]` | CSS variables + `data-theme`; no-flash init in layout; logic unit-tested. |
 
-### Chapter 08 - Who really posted this? (verified author identity)  `[ ]`
+### Chapter 08 - Who really posted this? (verified author identity)  `[x]` (tag ch08)
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 08.1 | Surface the signing wallet address | `[ ]` | The free-text author is spoofable; show the actual payment/stake address as the verifiable identity. |
-| 08.2 | "verified vs claimed" display | `[ ]` | Distinguish the on-chain address from the free-text name in the feed. |
+| 08.1 | Surface the signing wallet address | `[x]` | Backend reads the payer address from the tx's first input (verifiable, not spoofable); flows to feed JSON. `WallPost.address`. |
+| 08.2 | "verified vs claimed" display | `[x]` | Feed shows name + `(claimed)` + a `verified` short-address chip linking to cardanoscan (full address on hover). `shortenAddress`, `explorerAddrUrl`. |
+| 08.3 | Privacy trade-off + cost documented | `[x]` | Chapter covers linking-to-a-funded-wallet and the N+1 lookup (indexer fixes it). Best-effort: failure -> no chip, feed still works. |
 
 ### Chapter 09 - Keep it healthy (CI + free GitHub security)  `[ ]`
 | # | Feature | Status | Notes |

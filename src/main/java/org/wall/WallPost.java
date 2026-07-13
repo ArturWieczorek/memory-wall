@@ -11,8 +11,12 @@ import java.time.Instant;
  * @param message the message text (any length; chunked on-chain by {@link Wall})
  * @param timestamp ISO-8601 instant string, e.g. "2026-06-30T12:00:00Z"
  * @param txHash the on-chain transaction hash (empty until known, e.g. while building a post)
+ * @param address the verified payer address that signed the transaction (empty if not resolved);
+ *     the free-text {@code author} is a claim, whereas this is read from the chain and cannot be
+ *     faked
  */
-public record WallPost(String author, String message, String timestamp, String txHash) {
+public record WallPost(
+    String author, String message, String timestamp, String txHash, String address) {
 
   /** Cardano caps a single metadata text value at 64 bytes; the author must fit in one. */
   public static final int MAX_AUTHOR_BYTES = 64;
@@ -20,6 +24,7 @@ public record WallPost(String author, String message, String timestamp, String t
   public WallPost {
     author = author == null ? "" : author;
     txHash = txHash == null ? "" : txHash;
+    address = address == null ? "" : address;
     if (author.getBytes(StandardCharsets.UTF_8).length > MAX_AUTHOR_BYTES) {
       throw new IllegalArgumentException("author must be at most " + MAX_AUTHOR_BYTES + " bytes");
     }
@@ -31,9 +36,14 @@ public record WallPost(String author, String message, String timestamp, String t
     }
   }
 
-  /** A post without a known transaction hash yet (e.g. while building, or in tests). */
+  /** A post without a known transaction hash or address yet (e.g. while building, or in tests). */
   public WallPost(String author, String message, String timestamp) {
-    this(author, message, timestamp, "");
+    this(author, message, timestamp, "", "");
+  }
+
+  /** A post with a tx hash but no resolved payer address. */
+  public WallPost(String author, String message, String timestamp, String txHash) {
+    this(author, message, timestamp, txHash, "");
   }
 
   /** A post stamped at {@code when} (supplied for testability). */

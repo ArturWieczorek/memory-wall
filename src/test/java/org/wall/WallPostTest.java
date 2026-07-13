@@ -46,4 +46,13 @@ class WallPostTest {
     assertThat(new WallPost("bob", "hi", "2026-06-30T12:00:00Z", "deadbeef").txHash())
         .isEqualTo("deadbeef");
   }
+
+  @Test
+  @DisplayName("carries a verified payer address, defaulting to empty when unresolved")
+  void address() {
+    assertThat(new WallPost("bob", "hi", "2026-06-30T12:00:00Z").address()).isEmpty();
+    assertThat(new WallPost("bob", "hi", "2026-06-30T12:00:00Z", "tx").address()).isEmpty();
+    assertThat(new WallPost("bob", "hi", "2026-06-30T12:00:00Z", "tx", "addr_test1qxyz").address())
+        .isEqualTo("addr_test1qxyz");
+  }
 }

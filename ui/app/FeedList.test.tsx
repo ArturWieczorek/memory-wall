@@ -6,11 +6,13 @@ import type { Post } from "./lib";
 afterEach(cleanup);
 
 const now = Date.parse("2026-07-13T12:00:00Z");
+const ADDR = "addr_test1qpw0djgj0x59ngrjvqthn7enhvruxnsavsw5th63la3mjelz6aa7";
 const post = (over: Partial<Post> = {}): Post => ({
   author: "Ada",
   message: "gm cardano",
   timestamp: "2026-07-13T09:00:00Z",
   txHash: "deadbeef",
+  address: ADDR,
   ...over,
 });
 
@@ -34,9 +36,26 @@ describe("FeedList", () => {
     expect(link).toHaveAttribute("href", "https://preprod.cardanoscan.io/transaction/deadbeef");
   });
 
-  it("falls back to 'anon' and omits the tx link when there is no author or tx hash", () => {
-    render(<FeedList posts={[post({ author: "", txHash: "" })]} network="preprod" nowMs={now} offline={false} />);
+  it("shows the name as 'claimed' and the address as a 'verified' explorer link", () => {
+    render(<FeedList posts={[post()]} network="preprod" nowMs={now} offline={false} />);
+    expect(screen.getByText("(claimed)")).toBeInTheDocument();
+    expect(screen.getByText("verified")).toBeInTheDocument();
+    const addrLink = screen.getByRole("link", { name: "addr_test1qp...lz6aa7" });
+    expect(addrLink).toHaveAttribute("href", `https://preprod.cardanoscan.io/address/${ADDR}`);
+    expect(addrLink).toHaveAttribute("title", ADDR); // full address on hover
+  });
+
+  it("falls back to 'anon' and omits tx/address links when there is no author, tx, or address", () => {
+    render(
+      <FeedList
+        posts={[post({ author: "", txHash: "", address: "" })]}
+        network="preprod"
+        nowMs={now}
+        offline={false}
+      />,
+    );
     expect(screen.getByText("anon")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /view tx/i })).toBeNull();
+    expect(screen.queryByText("verified")).toBeNull();
   });
 });

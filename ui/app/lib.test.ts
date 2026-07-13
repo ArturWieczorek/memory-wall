@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   byteLength,
   explorerTxUrl,
+  explorerAddrUrl,
+  shortenAddress,
   relativeTime,
   rowToPost,
   resolveInitialTheme,
@@ -38,6 +40,28 @@ describe("explorerTxUrl", () => {
   });
 });
 
+describe("explorerAddrUrl", () => {
+  it("builds a cardanoscan address URL for the network", () => {
+    expect(explorerAddrUrl("preprod", "addr_test1qxyz")).toBe(
+      "https://preprod.cardanoscan.io/address/addr_test1qxyz",
+    );
+    expect(explorerAddrUrl("mainnet", "addr1qxyz")).toBe(
+      "https://cardanoscan.io/address/addr1qxyz",
+    );
+  });
+});
+
+describe("shortenAddress", () => {
+  it("shortens a long address to head...tail", () => {
+    const addr = "addr_test1qpw0djgj0x59ngrjvqthn7enhvruxnsavsw5th63la3mjelz6aa7";
+    expect(shortenAddress(addr)).toBe("addr_test1qp...lz6aa7");
+  });
+  it("leaves a short address unchanged and tolerates empty input", () => {
+    expect(shortenAddress("addr1short")).toBe("addr1short");
+    expect(shortenAddress("")).toBe("");
+  });
+});
+
 describe("relativeTime", () => {
   const now = Date.parse("2026-07-13T12:00:00Z");
   it("says 'just now' under a minute (and for future stamps)", () => {
@@ -68,11 +92,18 @@ describe("rowToPost", () => {
       message: "Hello, world",
       timestamp: "2026-07-13T12:00:00Z",
       txHash: "deadbeef",
+      address: "",
     });
   });
-  it("accepts a plain string message and a missing tx hash", () => {
+  it("accepts a plain string message and a missing tx hash (address stays empty here)", () => {
     const post = rowToPost({ json_metadata: { a: "", m: "hi", ts: "2026-07-13T12:00:00Z" } });
-    expect(post).toEqual({ author: "", message: "hi", timestamp: "2026-07-13T12:00:00Z", txHash: "" });
+    expect(post).toEqual({
+      author: "",
+      message: "hi",
+      timestamp: "2026-07-13T12:00:00Z",
+      txHash: "",
+      address: "",
+    });
   });
   it("returns null for malformed rows", () => {
     expect(rowToPost({ json_metadata: { a: "x", ts: "2026-07-13T12:00:00Z" } })).toBeNull(); // no message

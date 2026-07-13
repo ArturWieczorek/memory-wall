@@ -4,6 +4,8 @@ import com.bloxbean.cardano.client.api.common.OrderEnum;
 import com.bloxbean.cardano.client.api.exception.ApiException;
 import com.bloxbean.cardano.client.api.model.Result;
 import com.bloxbean.cardano.client.backend.api.BackendService;
+import com.bloxbean.cardano.client.backend.model.TxContentUtxo;
+import com.bloxbean.cardano.client.backend.model.TxContentUtxoInputs;
 import com.bloxbean.cardano.client.backend.model.metadata.MetadataJSONContent;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.math.BigInteger;
@@ -40,7 +42,12 @@ public class BlockfrostFeedReader implements FeedReader {
       for (MetadataJSONContent content : result.getValue()) {
         WallPost post = tryParse(content.getJsonMetadata(), content.getTxHash());
         if (post != null) {
-          posts.add(post);
+          // Best-effort verified identity: the address that signed this tx (one lookup per post).
+          // Unlike the free-text author, it cannot be spoofed.
+          String address = payerAddress(content.getTxHash());
+          posts.add(
+              new WallPost(
+                  post.author(), post.message(), post.timestamp(), post.txHash(), address));
         }
       }
       return Feed.newestFirst(posts);
@@ -73,5 +80,28 @@ public class BlockfrostFeedReader implements FeedReader {
     } catch (RuntimeException e) {
       return null; // skip anything that does not look like one of our posts
     }
+  }
+
+  /**
+   * The address that funded (and therefore signed) the transaction - read from its first input.
+   * Best-effort: returns "" if the lookup fails, so a provider hiccup never breaks the feed. For a
+   * simple self-payment post the inputs all belong to the poster's wallet.
+   */
+  private String payerAddress(String txHash) {
+    try {
+      Result<TxContentUtxo> utxos = backend.getTransactionService().getTransactionUtxos(txHash);
+      if (utxos.isSuccessful()
+          && utxos.getValue() != null
+          && utxos.getValue().getInputs() != null) {
+        for (TxContentUtxoInputs in : utxos.getValue().getInputs()) {
+          if (in.getAddress() != null && !in.getAddress().isBlank()) {
+            return in.getAddress();
+          }
+        }
+      }
+    } catch (ApiException e) {
+      // best-effort enrichment; leave the address empty on failure
+    }
+    return "";
   }
 }

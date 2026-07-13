@@ -5,7 +5,7 @@
 ## Current state
 - Status: LIVE + iterating. Core (Ch 00-06) complete and deployed (repo public; UI on GitHub Pages;
   backend runnable from home via a tunnel). Now adding polish/feature chapters from docs/BACKLOG.md:
-  Ch 07 (UX + first UI tests) DONE; Ch 08 (verified author identity) and Ch 09 (CI + free GitHub
+  Ch 07 (UX + first UI tests) and Ch 08 (verified author identity) DONE; Ch 09 (CI + free GitHub
   security) next.
 - (Historical) Ch 06 adds hardening for public self-hosting from a home box:
   /health + UI status light, CORS, per-IP rate limit, display-side blocklist moderation, a
@@ -49,6 +49,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 05 | Testnet + wrap-up (+ optional extensions) | [x] | ch05 | preprod/mainnet config; extensions + simplifications documented |
 | 06 | Serve it from home (networking + hardening) | [x] | ch06 | /health + status light, CORS, rate limit, blocklist, chain read-fallback, runtime config; beginner networking chapter |
 | 07 | Polish the wall (UX + UI tests) | [x] | ch07 | dark/light theme, time-ago, byte counter, view-tx link, network label, empty state; Vitest+RTL (19 UI tests); WallPost.txHash |
+| 08 | Verified author identity | [x] | ch08 | payer address read from tx input (WallPost.address); feed shows name (claimed) + verified short-address chip; privacy + N+1 cost documented |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -64,6 +65,18 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-13 - Ch 08 Verified author identity
+- Backend: WallPost gained an optional address (5th field; 3/4-arg convenience ctors keep callers
+  compiling). BlockfrostFeedReader reads each post's payer address from the tx's first input
+  (getTransactionUtxos), best-effort (failure -> empty, feed still renders); flows to feed JSON.
+- UI: lib.shortenAddress + explorerAddrUrl (shared cardanoscanHost refactor). FeedList shows the name
+  as "(claimed)" plus a "verified" short-address chip linking to cardanoscan (full address on hover).
+  rowToPost sets address "" (offline fallback has no cheap way to fetch inputs -> no chip there).
+- Tests: backend 28 (WallPost.address + feed JSON address); UI 23 (shortenAddress, explorerAddrUrl,
+  verified-chip RTL). typecheck + static build green.
+- Documented the privacy trade-off (links posts to a funded wallet) and the N+1 lookup cost (indexer
+  in backlog fixes it). Tag ch08.
+
 ### 2026-07-13 - Ch 07 Polish the wall (UX) + first UI tests
 - Backlog reshaped: `docs/BACKLOG.md` is now canonical. NFT receipt + dApp/datum marked OUT of scope
   (no functional benefit for a message wall; better taught by other portfolio projects). Building

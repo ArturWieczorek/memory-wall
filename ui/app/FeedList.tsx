@@ -1,4 +1,4 @@
-import { explorerTxUrl, relativeTime, type Post } from "./lib";
+import { explorerAddrUrl, explorerTxUrl, relativeTime, shortenAddress, type Post } from "./lib";
 
 // Presentational feed: given the posts, render them (or a friendly empty state). Kept free of hooks,
 // fetch, and window access so it is trivial to unit-test with React Testing Library.
@@ -26,23 +26,49 @@ export function FeedList({
     <ul style={{ listStyle: "none", padding: 0 }}>
       {posts.map((p, i) => (
         <li key={p.txHash || i} style={{ borderTop: "1px solid var(--border)", padding: "8px 0" }}>
-          <strong>{p.author || "anon"}</strong>{" "}
-          <span style={{ color: "var(--muted)", fontSize: 12 }} title={p.timestamp}>
-            {relativeTime(p.timestamp, nowMs)}
-          </span>
-          {p.txHash && (
-            <>
-              {" "}
-              <a
-                href={explorerTxUrl(network, p.txHash)}
-                target="_blank"
-                rel="noreferrer"
-                style={{ fontSize: 12 }}
-              >
-                view tx
-              </a>
-            </>
-          )}
+          <div>
+            {/* The name is a self-reported claim; the address (when present) is read from the chain
+                and provably signed the transaction, so it is the trustworthy identity. */}
+            <strong>{p.author || "anon"}</strong>{" "}
+            <span style={{ color: "var(--muted)", fontSize: 12 }}>(claimed)</span>{" "}
+            {p.address && (
+              <>
+                <a
+                  href={explorerAddrUrl(network, p.address)}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={p.address}
+                  style={{
+                    fontSize: 12,
+                    background: "var(--chip-bg)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 6,
+                    padding: "1px 6px",
+                    textDecoration: "none",
+                  }}
+                >
+                  {shortenAddress(p.address)}
+                </a>{" "}
+                <span style={{ color: "var(--muted)", fontSize: 11 }}>verified</span>{" "}
+              </>
+            )}
+            <span style={{ color: "var(--muted)", fontSize: 12 }} title={p.timestamp}>
+              {relativeTime(p.timestamp, nowMs)}
+            </span>
+            {p.txHash && (
+              <>
+                {" "}
+                <a
+                  href={explorerTxUrl(network, p.txHash)}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ fontSize: 12 }}
+                >
+                  view tx
+                </a>
+              </>
+            )}
+          </div>
           <div>{p.message}</div>
         </li>
       ))}

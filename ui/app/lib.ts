@@ -1,7 +1,13 @@
 // Pure helpers for the Memory Wall UI. Kept out of the React component so they are easy to unit-test
 // (see lib.test.ts) and reuse. No DOM or network access here.
 
-export type Post = { author: string; message: string; timestamp: string; txHash: string };
+export type Post = {
+  author: string;
+  message: string;
+  timestamp: string;
+  txHash: string;
+  address: string;
+};
 
 /** Mirrors the backend default cap (wall.max-message-bytes) so the UI can warn before posting. */
 export const MAX_MESSAGE_BYTES = 4096;
@@ -11,15 +17,29 @@ export function byteLength(s: string): number {
   return new TextEncoder().encode(s).length;
 }
 
-/** Cardanoscan transaction URL for the wall's network (defaults to preprod for anything unknown). */
+/** Cardanoscan host for the wall's network (defaults to preprod for anything unknown). */
+function cardanoscanHost(network: string): string {
+  return network === "mainnet"
+    ? "cardanoscan.io"
+    : network === "preview"
+      ? "preview.cardanoscan.io"
+      : "preprod.cardanoscan.io";
+}
+
+/** Cardanoscan transaction URL for the wall's network. */
 export function explorerTxUrl(network: string, txHash: string): string {
-  const host =
-    network === "mainnet"
-      ? "cardanoscan.io"
-      : network === "preview"
-        ? "preview.cardanoscan.io"
-        : "preprod.cardanoscan.io";
-  return `https://${host}/transaction/${txHash}`;
+  return `https://${cardanoscanHost(network)}/transaction/${txHash}`;
+}
+
+/** Cardanoscan address URL for the wall's network. */
+export function explorerAddrUrl(network: string, address: string): string {
+  return `https://${cardanoscanHost(network)}/address/${address}`;
+}
+
+/** Shorten a long address for display, e.g. "addr_test1qpw...z6aa7". */
+export function shortenAddress(addr: string, head = 12, tail = 6): string {
+  if (!addr || addr.length <= head + tail + 3) return addr;
+  return `${addr.slice(0, head)}...${addr.slice(-tail)}`;
 }
 
 /**
@@ -58,7 +78,9 @@ export function rowToPost(row: { tx_hash?: unknown; json_metadata?: unknown }): 
   const timestamp = typeof j.ts === "string" ? j.ts : "";
   const txHash = typeof row?.tx_hash === "string" ? row.tx_hash : "";
   if (!message || !timestamp) return null;
-  return { author, message, timestamp, txHash };
+  // The chain read-fallback has no cheap way to fetch the payer address, so it stays empty here
+  // (the UI simply omits the verified chip); the backend feed fills it in.
+  return { author, message, timestamp, txHash, address: "" };
 }
 
 // --- theme (light/dark) ---------------------------------------------------------------------------
