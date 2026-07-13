@@ -49,9 +49,19 @@ export function adaToLovelace(ada: number): number {
 /** Mirrors the backend default cap (wall.max-message-bytes) so the UI can warn before posting. */
 export const MAX_MESSAGE_BYTES = 4096;
 
+/** Mirrors the backend WallPost.MAX_AUTHOR_BYTES (a name must fit one 64-byte metadata value). */
+export const MAX_AUTHOR_BYTES = 64;
+
 /** UTF-8 byte length of a string - the same unit Cardano metadata and the backend measure in. */
 export function byteLength(s: string): number {
   return new TextEncoder().encode(s).length;
+}
+
+/** Colour for a "x / max bytes" counter: muted normally, amber near the limit, red over it. */
+export function byteCountColor(bytes: number, max: number): string {
+  if (bytes > max) return "var(--danger)"; // over the limit
+  if (bytes >= max * 0.9) return "var(--warn)"; // approaching it
+  return "var(--muted)";
 }
 
 /** Cardanoscan host for the wall's network (defaults to preprod for anything unknown). */

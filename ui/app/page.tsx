@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import {
   adaToLovelace,
+  byteCountColor,
   byteLength,
   filterPosts,
   lovelaceToAda,
   pinColorBg,
+  MAX_AUTHOR_BYTES,
   MAX_MESSAGE_BYTES,
   nextTheme,
   resolveInitialTheme,
@@ -216,6 +218,8 @@ export default function Home() {
   const offline = health === "offline";
   const bytes = byteLength(message);
   const overLimit = bytes > MAX_MESSAGE_BYTES;
+  const authorBytes = byteLength(author);
+  const authorOver = authorBytes > MAX_AUTHOR_BYTES;
   const nowMs = Date.now();
   const visible = filterPosts(feed, query);
   const feeOn = config?.feeEnabled ?? false;
@@ -268,8 +272,11 @@ export default function Home() {
           ))}
         </select>
         <input placeholder="name (optional)" value={author} onChange={(e) => setAuthor(e.target.value)} />
+        <div style={{ fontSize: 12, color: byteCountColor(authorBytes, MAX_AUTHOR_BYTES), textAlign: "right" }}>
+          {authorBytes} / {MAX_AUTHOR_BYTES} bytes{authorOver ? " - name too long" : ""}
+        </div>
         <textarea placeholder="your message" value={message} onChange={(e) => setMessage(e.target.value)} />
-        <div style={{ fontSize: 12, color: overLimit ? "var(--danger)" : "var(--muted)", textAlign: "right" }}>
+        <div style={{ fontSize: 12, color: byteCountColor(bytes, MAX_MESSAGE_BYTES), textAlign: "right" }}>
           {bytes} / {MAX_MESSAGE_BYTES} bytes{overLimit ? " - too long" : ""}
         </div>
 
@@ -335,7 +342,7 @@ export default function Home() {
 
         <button
           onClick={() => void post()}
-          disabled={!message.trim() || overLimit || belowMin || health !== "online"}
+          disabled={!message.trim() || overLimit || authorOver || belowMin || health !== "online"}
         >
           {offline ? "Posting unavailable (server offline)" : "Post to the wall"}
         </button>

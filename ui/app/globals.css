@@ -8,6 +8,7 @@
   --link: #2563eb;
   --danger: #b42323;
   --danger-bg: rgba(180, 35, 35, 0.08);
+  --warn: #d97706; /* amber: approaching a byte limit */
   --input-bg: #ffffff;
   --input-border: #cbd5e1;
   --chip-bg: #f1f5f9;
@@ -31,6 +32,7 @@
   --link: #6ea8fe;
   --danger: #ff6b6b;
   --danger-bg: rgba(255, 107, 107, 0.12);
+  --warn: #f59e0b; /* amber: approaching a byte limit (brighter for dark) */
   --input-bg: #11151c;
   --input-border: #2b323c;
   --chip-bg: #1b2029;

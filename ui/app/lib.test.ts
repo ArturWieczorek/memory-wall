@@ -10,9 +10,11 @@ import {
   lovelaceToAda,
   adaToLovelace,
   pinColorBg,
+  byteCountColor,
   resolveInitialTheme,
   nextTheme,
   MAX_MESSAGE_BYTES,
+  MAX_AUTHOR_BYTES,
   type Post,
 } from "./lib";
 
@@ -38,8 +40,18 @@ describe("byteLength", () => {
     expect(byteLength(String.fromCharCode(0xe9))).toBe(2); // U+00E9 e-acute = 2 UTF-8 bytes
     expect(byteLength(String.fromCharCode(0x20ac))).toBe(3); // U+20AC euro sign = 3 UTF-8 bytes
   });
-  it("exposes a cap that matches the backend default", () => {
+  it("exposes caps that match the backend defaults", () => {
     expect(MAX_MESSAGE_BYTES).toBe(4096);
+    expect(MAX_AUTHOR_BYTES).toBe(64);
+  });
+});
+
+describe("byteCountColor", () => {
+  it("is muted well under the limit, amber near it, red over it", () => {
+    expect(byteCountColor(10, 64)).toBe("var(--muted)");
+    expect(byteCountColor(60, 64)).toBe("var(--warn)"); // >= 90%
+    expect(byteCountColor(64, 64)).toBe("var(--warn)"); // exactly at the limit
+    expect(byteCountColor(65, 64)).toBe("var(--danger)"); // over
   });
 });
 
