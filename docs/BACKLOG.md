@@ -33,16 +33,16 @@ These are the three areas chosen on 2026-07-13 (tiers B, C, and D-minus-systemd 
 | 08.2 | "verified vs claimed" display | `[x]` | Feed shows name + `(claimed)` + a `verified` short-address chip linking to cardanoscan (full address on hover). `shortenAddress`, `explorerAddrUrl`. |
 | 08.3 | Privacy trade-off + cost documented | `[x]` | Chapter covers linking-to-a-funded-wallet and the N+1 lookup (indexer fixes it). Best-effort: failure -> no chip, feed still works. |
 
-### Chapter 09 - Keep it healthy (CI + free GitHub security)  `[ ]`
+### Chapter 09 - Keep it healthy (CI + free GitHub security)  `[x]` (tag ch09)
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
-| 09.1 | CI workflow | `[ ]` | Run `gradle test` + spotless + `next build`/typecheck on push/PR (separate from the Pages deploy). |
-| 09.2 | Dependabot | `[ ]` | `.github/dependabot.yml` for Gradle + npm + GitHub Actions version updates. |
-| 09.3 | CodeQL code scanning | `[ ]` | `.github/workflows/codeql.yml` (free on public repos). |
-| 09.4 | Secret scanning + push protection | `[ ]` | Enable via repo settings (free on public repos). |
-| 09.5 | Bump Action versions | `[ ]` | Clears the Node 20 deprecation warning in the deploy workflow. |
-| 09.6 | LICENSE | `[ ]` | Public portfolio repo should carry one. |
-| 09.7 | Per-visitor rate limit note | `[ ]` | Doc `WALL_CLIENT_IP_HEADER=CF-Connecting-IP` behind Cloudflare. |
+| 09.1 | CI workflow | `[x]` | `.github/workflows/ci.yml` - backend (spotlessCheck+test) + UI (typecheck+test+build) on push/PR. |
+| 09.2 | Dependabot | `[x]` | `.github/dependabot.yml` - gradle + npm(ui) + github-actions, weekly. |
+| 09.3 | CodeQL code scanning | `[x]` | `.github/workflows/codeql.yml` - java-kotlin (autobuild) + javascript-typescript. |
+| 09.4 | Secret scanning + push protection | `[x]` | Enabled via settings (+ Dependabot alerts + security-fix PRs). |
+| 09.5 | Bump Action versions | `[x]` | deploy-ui.yml bumped to current majors (checkout v7, setup-node v6, configure-pages v6, upload-pages-artifact v5, deploy-pages v5); clears Node 20 warning. |
+| 09.6 | LICENSE | `[x]` | MIT (2026 Artur Wieczorek). |
+| 09.7 | Per-visitor rate limit note | `[x]` | Documented in the chapter + infra/HOSTING.md (`WALL_CLIENT_IP_HEADER=CF-Connecting-IP` behind Cloudflare). |
 
 ## Later - documented, not scheduled
 

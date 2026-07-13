@@ -1,5 +1,8 @@
 # Memory Wall
 
+[![CI](https://github.com/ArturWieczorek/memory-wall/actions/workflows/ci.yml/badge.svg)](https://github.com/ArturWieczorek/memory-wall/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/ArturWieczorek/memory-wall/actions/workflows/codeql.yml/badge.svg)](https://github.com/ArturWieczorek/memory-wall/actions/workflows/codeql.yml)
+
 A public, append-only **message wall on Cardano**: anyone posts a short message that is recorded
 permanently as transaction metadata and shown as a live feed on a web page. The value is the
 permanent message, not money - so it is just as meaningful on a testnet.

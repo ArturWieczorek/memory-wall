@@ -5,8 +5,8 @@
 ## Current state
 - Status: LIVE + iterating. Core (Ch 00-06) complete and deployed (repo public; UI on GitHub Pages;
   backend runnable from home via a tunnel). Now adding polish/feature chapters from docs/BACKLOG.md:
-  Ch 07 (UX + first UI tests) and Ch 08 (verified author identity) DONE; Ch 09 (CI + free GitHub
-  security) next.
+  Ch 07 (UX), Ch 08 (verified author identity), and Ch 09 (CI + free GitHub security) DONE. Next up
+  when wanted: stable Tailscale hosting, or backlog items (search, pagination/indexer, images).
 - (Historical) Ch 06 adds hardening for public self-hosting from a home box:
   /health + UI status light, CORS, per-IP rate limit, display-side blocklist moderation, a
   Blockfrost read-only fallback when the backend is down, and runtime-configurable backend URL.
@@ -50,6 +50,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 06 | Serve it from home (networking + hardening) | [x] | ch06 | /health + status light, CORS, rate limit, blocklist, chain read-fallback, runtime config; beginner networking chapter |
 | 07 | Polish the wall (UX + UI tests) | [x] | ch07 | dark/light theme, time-ago, byte counter, view-tx link, network label, empty state; Vitest+RTL (19 UI tests); WallPost.txHash |
 | 08 | Verified author identity | [x] | ch08 | payer address read from tx input (WallPost.address); feed shows name (claimed) + verified short-address chip; privacy + N+1 cost documented |
+| 09 | Keep it healthy (CI + free GitHub security) | [x] | ch09 | CI (backend+UI), Dependabot (3 ecosystems), CodeQL (java+ts), secret scanning + push protection, action bumps, MIT LICENSE |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -65,6 +66,19 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-13 - Ch 09 Keep it healthy (CI + free GitHub security)
+- Added .github/workflows/ci.yml (backend: spotlessCheck+test on Java 21; UI: npm ci+typecheck+test+
+  build) on push/PR; .github/workflows/codeql.yml (java-kotlin autobuild + javascript-typescript);
+  .github/dependabot.yml (gradle, npm/ui, github-actions weekly). Bumped deploy-ui.yml action majors
+  (checkout v7, setup-node v6, configure-pages v6, upload-pages-artifact v5, deploy-pages v5) to clear
+  the Node 20 deprecation. Added MIT LICENSE.
+- Enabled via gh api (free on public repo): Dependabot vulnerability alerts + automatic security-fix
+  PRs, secret scanning, secret-scanning push protection. Confirmed code-scanning default setup was
+  not-configured (so the advanced CodeQL workflow does not conflict).
+- Chapter 09 is a beginner guide to CI/Dependabot/CodeQL/secret-scanning + the housekeeping (action
+  bumps, LICENSE) and the per-visitor rate-limit note. No new app code (verification = pipelines green).
+  README got CI + CodeQL badges. Tag ch09.
+
 ### 2026-07-13 - Ch 08 Verified author identity
 - Backend: WallPost gained an optional address (5th field; 3/4-arg convenience ctors keep callers
   compiling). BlockfrostFeedReader reads each post's payer address from the tx's first input

@@ -1,0 +1,21 @@
+# Dependabot: open weekly PRs when dependencies have newer versions, across all three ecosystems
+# this repo uses. Security alerts/fixes are enabled separately in the repo's security settings.
+version: 2
+updates:
+  - package-ecosystem: gradle # backend (build.gradle.kts)
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm # UI (ui/package.json)
+    directory: "/ui"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions # the workflows in .github/workflows
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
