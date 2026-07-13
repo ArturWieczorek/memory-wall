@@ -16,13 +16,15 @@
   Next.js 14.2.35 + React 18.3.1 + TS.
 
 ### Next steps (optional, not built)
-1. HOST IT PUBLICLY -> read `infra/AGENT-HANDOFF.md` (full readiness state + the 3 remaining config
-   gaps + the deploy runbook). In short: (a) make the Blockfrost project id configurable in
-   WallConfig (WALL_BACKEND_PROJECT_ID; "wall" only works for local Yaci), (b) UI static-export config
-   in ui/next.config.mjs for Pages, (c) CVE re-check of Spring Boot/bloxbean/Next.js. Then run the
-   backend (bound to localhost) + `tailscale funnel 8090` + point ui/public/config.js at the tunnel +
-   deploy the UI to Pages + set WALL_CORS_ORIGINS. The server needs no key/funds; posters use their
-   own wallets. Repo-public is already audited SAFE.
+1. HOST IT PUBLICLY -> read `infra/AGENT-HANDOFF.md`. All 3 pre-hosting config gaps are now DONE
+   (2026-07-13): provider project id configurable, UI static export + Pages workflow, CVE re-check
+   (Spring Boot 3.4.13 -> 3.5.16). Repo is now PUBLIC and the UI auto-deploys to GitHub Pages via
+   `.github/workflows/deploy-ui.yml`. To make it FULLY functional (not just rendered): run the backend
+   (bound to localhost) with a real preprod Blockfrost key (WALL_BACKEND_URL + WALL_BACKEND_PROJECT_ID)
+   + `tailscale funnel 8090` + set ui/public/config.js `__WALL_API__` to the tunnel URL + set
+   WALL_CORS_ORIGINS to the Pages URL. Until then the page loads but shows "server offline" (the
+   read-from-chain fallback still works if a visitor pastes their own Blockfrost key). The wall runs on
+   ONE network per deployment (preprod); the server needs no key/funds - posters use their own wallets.
 2. Images (see docs/future-images.md). 3. dApp/datum version. 4. NFT receipt (CIP-25).
 5. SEARCH posts: quick win = client-side filter over the loaded feed (author/message substring, maybe
    a date range) - trivial but only the recent window. Full version = search across ALL label-1719
@@ -57,6 +59,23 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-13 - close hosting gaps 2-3, go public, deploy UI to Pages
+- CVE re-check vs live advisories: Spring Boot 3.4.13 (EOL OSS) -> 3.5.16 (supported; April-2026
+  fixes) + testRuntimeOnly(junit-platform-launcher) to align the launcher Gradle 8.10.2 bundles.
+  Next.js 14.2.35 / React 18.3.1 kept (already latest 14.x/18.x; outstanding Next CVEs are server-side
+  and a static export runs no server; major bump to 15/16 deferred). bloxbean 0.7.2 kept (no advisory).
+  26 backend tests green.
+- UI static export: next.config.mjs now emits `output: 'export'` in prod, rewrites proxy dev-only,
+  WALL_BASE_PATH for root (Cloudflare) vs sub-path (GitHub project Pages), NEXT_PUBLIC_BASE_PATH so
+  public/config.js loads under the sub-path. Verified `next build` for both root and sub-path (correct
+  single prefix on config.js + _next). Added .github/workflows/deploy-ui.yml (Pages deploy, .nojekyll).
+- Final security pass on the delta: secret scan clean (no secret-named files, no key patterns);
+  application.yml is all env-var-with-safe-default; delta adds no secrets. Repo-public stays SAFE.
+- Made the GitHub repo PUBLIC and pushed; Pages enabled (source = GitHub Actions). The page renders
+  but shows "server offline" until the backend is run + config.js __WALL_API__ points at the tunnel.
+- Two beginner explainer docs live OUTSIDE the repo in /home/artur/Projects/Workspace/:
+  memory-wall-security-fixes-explained.md and memory-wall-publishing-and-admin-explained.md.
+
 ### 2026-07-12 - pre-publish security audit + fixes
 - Ran a dedicated review agent (secrets + exposed-backend posture). VERDICTS: repo-public = SAFE (no
   secrets in tree or 9-commit history; .gitignore clean; only note = author email becomes public);

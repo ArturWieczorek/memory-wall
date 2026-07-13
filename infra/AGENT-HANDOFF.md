@@ -9,10 +9,14 @@
   `tsc` + `next build` clean. It is **NOT deployed and NOT published** - that is user-gated.
 - Audit verdicts: **repo-public = SAFE** (no secrets in tree or full git history); **deploy-public =
   SAFE** (the flagged fixes are applied).
-- There are **3 small remaining gaps** before hosting on a real public network (preprod/mainnet) -
-  see "Remaining work" below. They are NOT yet done (the user asked for this handoff instead of
-  having them implemented immediately).
-- **Do NOT** make the repo public, push, or expose the service without an explicit user go-ahead.
+- **All 3 pre-hosting gaps are now closed** (2026-07-13): provider project id is configurable, the UI
+  builds a static export for Pages (+ a deploy workflow), and dependencies were re-checked against
+  live advisories (Spring Boot bumped 3.4.13 -> 3.5.16). See "Remaining work" for the details.
+- The wall runs on **ONE network per deployment** (config, not user-selectable) - a per-visitor choice
+  would fragment the feed across chains. Default/target for the public wall is **preprod** (free test
+  ADA; the permanent message is the value, not money). Mainnet is a pure config change.
+- **Do NOT** expose the running backend service without an explicit user go-ahead. (Making the repo
+  public + deploying the static UI was explicitly authorized on 2026-07-13.)
 
 ## What this app is (so the plan makes sense)
 - Two parts: a **Spring Boot backend** (`src/main/java/org/wall/`) and a **Next.js UI** (`ui/`).
@@ -46,14 +50,26 @@
    locally against real preprod Blockfrost: `GET /api/feed` read a real label-1719 post and
    `POST /api/posts/build` produced a valid unsigned tx. (The key is a secret - env only, never
    committed.)
-2. **UI static-export config for Pages.** `ui/next.config.mjs` has a dev-only `rewrites()` proxy.
-   Static hosting (Cloudflare/GitHub Pages) needs `output: 'export'` and the rewrites guarded to dev
-   only (in production the UI calls the backend directly via `window.__WALL_API__`, so the proxy is
-   unused). Verify `next build` still passes after the change. (Alternatively host the UI on a
-   Next-capable host and skip export - then rewrites can stay but are unused in prod.)
-3. **Dependency CVE re-check** (audit finding 5, no live CVE feed during the audit): verify Spring
-   Boot 3.4.13, bloxbean cardano-client 0.7.2, Next.js 14.2.35, React 18.3.1 against current
-   advisories; bump if needed; keep green.
+2. [DONE 2026-07-13] **UI static-export config for Pages.** `ui/next.config.mjs` now emits a static
+   export in production (`output: 'export'`) and keeps the `rewrites()` proxy for dev only (a static
+   export forbids rewrites; in prod the UI calls the backend directly via `window.__WALL_API__`).
+   Supports both root hosting (Cloudflare Pages) and sub-path hosting (GitHub project Pages) via
+   `WALL_BASE_PATH` (e.g. `/memory-wall`); `NEXT_PUBLIC_BASE_PATH` is mirrored so `public/config.js`
+   loads under the sub-path (public/ files are not auto-prefixed). Verified: `next build` passes for
+   BOTH root and sub-path; generated HTML references `config.js` and `_next/` with the correct single
+   prefix in each case. A Pages deploy workflow was added: `.github/workflows/deploy-ui.yml` (builds
+   with `WALL_BASE_PATH=/<repo>`, adds `.nojekyll`, publishes via the official Pages actions).
+3. [DONE 2026-07-13] **Dependency CVE re-check** (audit finding 5). Checked against live advisories
+   (July 2026): **Spring Boot 3.4.13 -> 3.5.16** (the 3.4.x OSS line is EOL and stops at 3.4.13; 3.5.16
+   is the latest supported OSS 3.5.x and carries the April-2026 fixes; most of those CVEs did not
+   apply anyway - no Spring Security, no DevTools). Added `testRuntimeOnly(junit-platform-launcher)`
+   to align the launcher the newer JUnit needs (Gradle 8.10.2 bundles an older one). **Next.js
+   14.2.35 / React 18.3.1** are already the latest of the 14.x / 18.x lines; the outstanding Next
+   advisories (RSC DoS, Server Functions source disclosure, middleware/SSRF/cache-poisoning) target
+   the SERVER runtime, which a static export does not run, so the deployed site is not exposed - a
+   major jump to Next 15/16 + React 19 was judged not worth the breakage risk for a statically hosted
+   hobby wall (revisit if ever hosted on a Next server). **bloxbean 0.7.2** - no advisory found; it is
+   server-side only. Backend: 26 tests green after the bump.
 
 ## What the user must provide (accounts / infra - not code)
 - A **free Blockfrost preprod project id** (blockfrost.io) - or run their own provider.
