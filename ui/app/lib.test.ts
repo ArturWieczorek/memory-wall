@@ -7,6 +7,8 @@ import {
   relativeTime,
   rowToPost,
   filterPosts,
+  lovelaceToAda,
+  adaToLovelace,
   resolveInitialTheme,
   nextTheme,
   MAX_MESSAGE_BYTES,
@@ -19,6 +21,8 @@ const mkPost = (over: Partial<Post> = {}): Post => ({
   timestamp: "2026-07-13T12:00:00Z",
   txHash: "tx",
   address: "",
+  tipLovelace: 0,
+  pinned: false,
   ...over,
 });
 
@@ -104,6 +108,8 @@ describe("rowToPost", () => {
       timestamp: "2026-07-13T12:00:00Z",
       txHash: "deadbeef",
       address: "",
+      tipLovelace: 0,
+      pinned: false,
     });
   });
   it("accepts a plain string message and a missing tx hash (address stays empty here)", () => {
@@ -114,6 +120,8 @@ describe("rowToPost", () => {
       timestamp: "2026-07-13T12:00:00Z",
       txHash: "",
       address: "",
+      tipLovelace: 0,
+      pinned: false,
     });
   });
   it("returns null for malformed rows", () => {
@@ -140,6 +148,19 @@ describe("filterPosts", () => {
   });
   it("returns none when nothing matches", () => {
     expect(filterPosts(posts, "zzz")).toHaveLength(0);
+  });
+});
+
+describe("ADA / lovelace helpers", () => {
+  it("formats lovelace as ADA, trimming trailing zeros", () => {
+    expect(lovelaceToAda(5_000_000)).toBe("5");
+    expect(lovelaceToAda(1_500_000)).toBe("1.5");
+    expect(lovelaceToAda(0)).toBe("0");
+  });
+  it("converts ADA to lovelace, rounding", () => {
+    expect(adaToLovelace(5)).toBe(5_000_000);
+    expect(adaToLovelace(1.5)).toBe(1_500_000);
+    expect(adaToLovelace(0)).toBe(0);
   });
 });
 

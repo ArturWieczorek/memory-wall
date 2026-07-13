@@ -55,4 +55,16 @@ class WallPostTest {
     assertThat(new WallPost("bob", "hi", "2026-06-30T12:00:00Z", "tx", "addr_test1qxyz").address())
         .isEqualTo("addr_test1qxyz");
   }
+
+  @Test
+  @DisplayName("carries tip + pinned, defaulting to 0 / false")
+  void tipAndPinned() {
+    WallPost none = new WallPost("a", "hi", "2026-06-30T12:00:00Z");
+    assertThat(none.tipLovelace()).isZero();
+    assertThat(none.pinned()).isFalse();
+    WallPost tipped =
+        new WallPost("a", "hi", "2026-06-30T12:00:00Z", "tx", "addr", 5_000_000L, true);
+    assertThat(tipped.tipLovelace()).isEqualTo(5_000_000L);
+    assertThat(tipped.pinned()).isTrue();
+  }
 }

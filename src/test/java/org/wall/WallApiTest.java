@@ -49,20 +49,39 @@ class WallApiTest {
   }
 
   @Test
-  @DisplayName("GET /api/feed returns recent posts")
+  @DisplayName("GET /api/feed returns recent posts (with tip + pinned)")
   void feed() throws Exception {
     when(feedReader.recent(anyInt()))
         .thenReturn(
             List.of(
                 new WallPost(
-                    "alice", "gm cardano", "2026-06-30T12:00:00Z", "tx123", "addr_test1qalice")));
+                    "alice",
+                    "gm cardano",
+                    "2026-06-30T12:00:00Z",
+                    "tx123",
+                    "addr_test1qalice",
+                    5_000_000L,
+                    true)));
 
     mvc.perform(get("/api/feed"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].author").value("alice"))
         .andExpect(jsonPath("$[0].message").value("gm cardano"))
         .andExpect(jsonPath("$[0].txHash").value("tx123"))
-        .andExpect(jsonPath("$[0].address").value("addr_test1qalice"));
+        .andExpect(jsonPath("$[0].address").value("addr_test1qalice"))
+        .andExpect(jsonPath("$[0].tipLovelace").value(5_000_000))
+        .andExpect(jsonPath("$[0].pinned").value(true));
+  }
+
+  @Test
+  @DisplayName("GET /api/config reports the fee tier OFF by default (with pin defaults)")
+  void configDefault() throws Exception {
+    mvc.perform(get("/api/config"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.feeEnabled").value(false))
+        .andExpect(jsonPath("$.minFeeLovelace").value(0))
+        .andExpect(jsonPath("$.maxPinned").value(3))
+        .andExpect(jsonPath("$.pinDurationSeconds").value(604800));
   }
 
   @Test

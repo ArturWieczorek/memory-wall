@@ -11,6 +11,10 @@
   --input-bg: #ffffff;
   --input-border: #cbd5e1;
   --chip-bg: #f1f5f9;
+  --pin-bg: #fff7ed; /* soft pastel highlight for pinned posts */
+  --pin-border: #fed7aa;
+  --pin-badge: #f59e0b;
+  --pin-badge-fg: #1a1a1a;
 }
 :root[data-theme="dark"] {
   --bg: #0f1115;
@@ -23,6 +27,10 @@
   --input-bg: #11151c;
   --input-border: #2b323c;
   --chip-bg: #1b2029;
+  --pin-bg: #2a2113; /* soft pastel highlight for pinned posts (dark) */
+  --pin-border: #7c5312;
+  --pin-badge: #f59e0b;
+  --pin-badge-fg: #1a1a1a;
 }
 
 body {

@@ -7,6 +7,7 @@ import com.bloxbean.cardano.client.quicktx.QuickTxBuilder;
 import com.bloxbean.cardano.client.quicktx.Tx;
 import com.bloxbean.cardano.client.transaction.spec.Transaction;
 import com.bloxbean.cardano.client.util.HexUtil;
+import java.math.BigInteger;
 import org.springframework.stereotype.Component;
 
 /**
@@ -19,23 +20,26 @@ import org.springframework.stereotype.Component;
 public class PostTxBuilder {
 
   private final BackendService backend;
+  private final WallProperties props;
 
-  public PostTxBuilder(BackendService backend) {
+  public PostTxBuilder(BackendService backend, WallProperties props) {
     this.backend = backend;
+    this.props = props;
   }
 
   /**
-   * Build the unsigned post transaction for {@code senderAddress}; returns its CBOR hex. The
-   * address may be bech32 ({@code addr...}) or the hex form a CIP-30 wallet returns - we normalise
-   * it.
+   * Build the unsigned post transaction for {@code senderAddress}; returns its CBOR hex. A tiny
+   * self-payment carries the metadata; when the fee tier is on and {@code tipLovelace > 0}, an
+   * extra output pays that tip to the operator's fee address. The address may be bech32 ({@code
+   * addr...}) or the hex form a CIP-30 wallet returns - we normalise it.
    */
-  public String buildUnsignedHex(String senderAddress, WallPost post) {
+  public String buildUnsignedHex(String senderAddress, WallPost post, long tipLovelace) {
     String bech32 = toBech32(senderAddress);
-    Tx tx =
-        new Tx()
-            .payToAddress(bech32, Amount.ada(1))
-            .attachMetadata(Wall.postMetadata(post))
-            .from(bech32);
+    Tx tx = new Tx().payToAddress(bech32, Amount.ada(1));
+    if (props.feeEnabled() && tipLovelace > 0) {
+      tx = tx.payToAddress(props.feeAddress(), Amount.lovelace(BigInteger.valueOf(tipLovelace)));
+    }
+    tx = tx.attachMetadata(Wall.postMetadata(post)).from(bech32);
     try {
       Transaction unsigned = new QuickTxBuilder(backend).compose(tx).build();
       return unsigned.serializeToHex();

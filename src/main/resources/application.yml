@@ -17,6 +17,18 @@ wall:
     # Cloudflare). Blank = use the socket address. Do NOT set to X-Forwarded-For (spoofable).
     client-ip-header: ${WALL_CLIENT_IP_HEADER:}
 
+  # Fee / pin tier (OFF by default - leave fee-address blank for free posting). When set, a post built
+  # by this backend must tip at least min-fee-lovelace to the fee address; a tip >= pin-fee-lovelace
+  # pins the post to the top of the feed (the amount is verified on-chain when reading the feed).
+  fee-address: ${WALL_FEE_ADDRESS:}
+  min-fee-lovelace: ${WALL_MIN_FEE_LOVELACE:0}
+  pin-fee-lovelace: ${WALL_PIN_FEE_LOVELACE:0}
+  # How many posts may be pinned at once (highest tips win the slots); <=0 means unlimited.
+  max-pinned: ${WALL_MAX_PINNED:3}
+  # How long a pin lasts from its timestamp before reverting to a normal post (default 7 days);
+  # <=0 means pins never expire.
+  pin-duration-seconds: ${WALL_PIN_DURATION_SECONDS:604800}
+
   # Reject a post whose message exceeds this many UTF-8 bytes (guards against huge-tx abuse).
   max-message-bytes: ${WALL_MAX_MESSAGE_BYTES:4096}
   # Reject a submit whose txCbor/witness hex exceeds this many characters.

@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from "react";
 import {
+  adaToLovelace,
   byteLength,
   filterPosts,
+  lovelaceToAda,
   MAX_MESSAGE_BYTES,
   nextTheme,
   resolveInitialTheme,
   rowToPost,
   type Post,
   type Theme,
+  type WallConfig,
 } from "./lib";
 import { FeedList } from "./FeedList";
 
@@ -31,6 +34,22 @@ export default function Home() {
   const [bfKey, setBfKey] = useState("");
   const [theme, setTheme] = useState<Theme>("light");
   const [query, setQuery] = useState("");
+  const [config, setConfig] = useState<WallConfig | null>(null);
+  const [tipAda, setTipAda] = useState("");
+
+  // Fetch the fee/pin tier config once, so we know whether to show the tip field + rules.
+  async function loadConfig() {
+    try {
+      const r = await fetch(`${apiBase()}/api/config`);
+      if (r.ok) {
+        const c = (await r.json()) as WallConfig;
+        setConfig(c);
+        if (c.feeEnabled) setTipAda(lovelaceToAda(c.minFeeLovelace)); // prefill the minimum
+      }
+    } catch {
+      /* config is optional; posting still works with the tier off */
+    }
+  }
 
   // Poll the backend's health so we can show an online/offline light and disable posting when down.
   async function probe(): Promise<boolean> {
@@ -92,6 +111,7 @@ export default function Home() {
 
     const cardano = (window as unknown as { cardano?: Record<string, { enable?: unknown }> }).cardano ?? {};
     setWallets(Object.keys(cardano).filter((k) => typeof cardano[k]?.enable === "function"));
+    void loadConfig();
     void loadFeed();
     const id = setInterval(() => void probe(), 30_000);
     return () => clearInterval(id);
@@ -125,10 +145,12 @@ export default function Home() {
       const address: string = await api.getChangeAddress();
 
       setStatus("Building transaction...");
+      const body: Record<string, unknown> = { address, author, message };
+      if (config?.feeEnabled) body.tipLovelace = adaToLovelace(Number(tipAda) || 0);
       const built = await fetch(`${apiBase()}/api/posts/build`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ address, author, message }),
+        body: JSON.stringify(body),
       });
       if (!built.ok) {
         setStatus("Build failed: " + (await built.text()));
@@ -164,6 +186,11 @@ export default function Home() {
   const overLimit = bytes > MAX_MESSAGE_BYTES;
   const nowMs = Date.now();
   const visible = filterPosts(feed, query);
+  const feeOn = config?.feeEnabled ?? false;
+  const tipLov = adaToLovelace(Number(tipAda) || 0);
+  const belowMin = feeOn && !!config && tipLov < config.minFeeLovelace;
+  const willPin = feeOn && !!config && config.pinFeeLovelace > 0 && tipLov >= config.pinFeeLovelace;
+  const pinDays = config ? Math.max(1, Math.round(config.pinDurationSeconds / 86400)) : 0;
 
   return (
     <main>
@@ -213,7 +240,49 @@ export default function Home() {
         <div style={{ fontSize: 12, color: overLimit ? "var(--danger)" : "var(--muted)", textAlign: "right" }}>
           {bytes} / {MAX_MESSAGE_BYTES} bytes{overLimit ? " - too long" : ""}
         </div>
-        <button onClick={() => void post()} disabled={!message.trim() || overLimit || health !== "online"}>
+
+        {feeOn && config && (
+          <div
+            style={{
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              padding: "8px 12px",
+              display: "grid",
+              gap: 6,
+            }}
+          >
+            <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+              Tip (ADA):
+              <input
+                type="number"
+                min={lovelaceToAda(config.minFeeLovelace)}
+                step="0.1"
+                value={tipAda}
+                onChange={(e) => setTipAda(e.target.value)}
+                style={{ width: 120 }}
+              />
+              {willPin ? (
+                <span style={{ color: "var(--pin-badge)", fontWeight: 700, fontSize: 12 }}>
+                  will pin
+                </span>
+              ) : null}
+            </label>
+            <div style={{ fontSize: 12, color: belowMin ? "var(--danger)" : "var(--muted)" }}>
+              <strong>Pinning rules:</strong> posting costs at least{" "}
+              {lovelaceToAda(config.minFeeLovelace)} ADA (a tip to the wall). Tip{" "}
+              {lovelaceToAda(config.pinFeeLovelace)} ADA or more to <strong>pin</strong> your post to
+              the top. At most {config.maxPinned} posts are pinned at once - the highest tips win the
+              slots, a pin lasts up to {pinDays} day{pinDays === 1 ? "" : "s"}, and a bigger tip can
+              bump a smaller one. The tip is paid on-chain to the wall.
+              {belowMin ? " (Your tip is below the minimum.)" : ""}
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => void post()}
+          disabled={!message.trim() || overLimit || belowMin || health !== "online"}
+        >
           {offline ? "Posting unavailable (server offline)" : "Post to the wall"}
         </button>
         {status && <p>{status}</p>}

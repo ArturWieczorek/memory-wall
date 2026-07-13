@@ -53,6 +53,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 08 | Verified author identity | [x] | ch08 | payer address read from tx input (WallPost.address); feed shows name (claimed) + verified short-address chip; privacy + N+1 cost documented |
 | 09 | Keep it healthy (CI + free GitHub security) | [x] | ch09 | CI (backend+UI), Dependabot (3 ecosystems), CodeQL (java+ts), secret scanning + push protection, action bumps, MIT LICENSE |
 | 10 | Search + precise moderation | [x] | ch10 | client-side feed search (filterPosts, loaded window only); tx-hash curator moderation (wall.blocked-tx-hashes) alongside the term blocklist |
+| 11 | Fee + pin tier | [x] | ch11 | optional tip-to-post / tip-more-to-pin; scarce+competitive+time-limited pins verified on-chain; /api/config; UI tip field + rules + pinned pastel/badge; stateless (no queue). Payer palette color deferred to ch12 |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -68,6 +69,20 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-13 - Ch 11 Fee + pin tier
+- Optional fee/pin tier (OFF by default; on when wall.fee-address set). Backend: WallProperties gains
+  feeAddress/minFeeLovelace/pinFeeLovelace/maxPinned(3)/pinDurationSeconds(7d). PostTxBuilder adds a
+  fee-address output when tipping; /posts/build rejects below-min tips. BlockfrostFeedReader reads the
+  tip from the tx outputs (reusing the Ch08 utxo lookup) and marks eligibility. WallPost gains
+  tipLovelace + pinned. Feed.forDisplay = pure, tested: top-N by tip, expiry window, demote overflow/
+  expired. New /api/config exposes the tier + thresholds. Design (with the user): stateless
+  competitive auction (no DB/queue), time-limited pins, scarce slots ranked by tip (bigger tip bumps).
+- UI: fetch /api/config; when on, a tip field (prefilled to min) + a live "will pin" hint + plain
+  pinning-rules text (real numbers); below-min tip blocks Post. Pinned posts get a pastel highlight +
+  PINNED badge with the tip. lib: lovelaceToAda/adaToLovelace.
+- Tests: backend 37, UI 29; typecheck + build green. Payer-chosen pastel palette (on-chain) deferred
+  to Ch12; pagination is Ch13. Tag ch11.
+
 ### 2026-07-13 - Ch 10 Search + precise moderation (small wins)
 - UI: lib.filterPosts (case-insensitive author/message substring over the LOADED window only - labelled
   as such); search box + "N of M loaded match" hint + no-match state in page.tsx. 3 new lib tests (UI 26).

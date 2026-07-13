@@ -4,27 +4,33 @@ import com.bloxbean.cardano.client.api.common.OrderEnum;
 import com.bloxbean.cardano.client.api.exception.ApiException;
 import com.bloxbean.cardano.client.api.model.Result;
 import com.bloxbean.cardano.client.backend.api.BackendService;
+import com.bloxbean.cardano.client.backend.model.TxContentOutputAmount;
 import com.bloxbean.cardano.client.backend.model.TxContentUtxo;
 import com.bloxbean.cardano.client.backend.model.TxContentUtxoInputs;
+import com.bloxbean.cardano.client.backend.model.TxContentUtxoOutputs;
 import com.bloxbean.cardano.client.backend.model.metadata.MetadataJSONContent;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
 /**
- * Reads the feed by querying the backend for all transactions carrying our metadata label, and
- * parsing each one's JSON metadata into a {@link WallPost}. (Integration: needs a live backend; the
- * controller is unit-tested with a stubbed {@link FeedReader} instead.)
+ * Reads the feed by querying the backend for all transactions carrying our metadata label, parsing
+ * each one's JSON metadata into a {@link WallPost}, and enriching it from the transaction's UTxOs
+ * (the verified payer address and any tip paid to the operator's fee address). (Integration: needs
+ * a live backend; the controller is unit-tested with a stubbed {@link FeedReader} instead.)
  */
 @Component
 public class BlockfrostFeedReader implements FeedReader {
 
   private final BackendService backend;
+  private final WallProperties props;
 
-  public BlockfrostFeedReader(BackendService backend) {
+  public BlockfrostFeedReader(BackendService backend, WallProperties props) {
     this.backend = backend;
+    this.props = props;
   }
 
   @Override
@@ -42,15 +48,10 @@ public class BlockfrostFeedReader implements FeedReader {
       for (MetadataJSONContent content : result.getValue()) {
         WallPost post = tryParse(content.getJsonMetadata(), content.getTxHash());
         if (post != null) {
-          // Best-effort verified identity: the address that signed this tx (one lookup per post).
-          // Unlike the free-text author, it cannot be spoofed.
-          String address = payerAddress(content.getTxHash());
-          posts.add(
-              new WallPost(
-                  post.author(), post.message(), post.timestamp(), post.txHash(), address));
+          posts.add(enrich(post, content.getTxHash()));
         }
       }
-      return Feed.newestFirst(posts);
+      return Feed.forDisplay(posts, props.maxPinned(), Instant.now(), props.pinDurationSeconds());
     } catch (ApiException e) {
       throw new IllegalStateException("feed query failed", e);
     }
@@ -83,25 +84,61 @@ public class BlockfrostFeedReader implements FeedReader {
   }
 
   /**
-   * The address that funded (and therefore signed) the transaction - read from its first input.
-   * Best-effort: returns "" if the lookup fails, so a provider hiccup never breaks the feed. For a
-   * simple self-payment post the inputs all belong to the poster's wallet.
+   * Fill in the verified payer address and the tip paid to the fee address from the transaction's
+   * UTxOs (one lookup per post). Best-effort: on any failure the post keeps its defaults (no
+   * address, no tip), so a provider hiccup never breaks the feed. A post is "pinned" only if its
+   * tip actually reached the pin threshold on-chain.
    */
-  private String payerAddress(String txHash) {
+  private WallPost enrich(WallPost post, String txHash) {
+    String address = "";
+    long tip = 0;
     try {
-      Result<TxContentUtxo> utxos = backend.getTransactionService().getTransactionUtxos(txHash);
-      if (utxos.isSuccessful()
-          && utxos.getValue() != null
-          && utxos.getValue().getInputs() != null) {
-        for (TxContentUtxoInputs in : utxos.getValue().getInputs()) {
-          if (in.getAddress() != null && !in.getAddress().isBlank()) {
-            return in.getAddress();
+      Result<TxContentUtxo> res = backend.getTransactionService().getTransactionUtxos(txHash);
+      if (res.isSuccessful() && res.getValue() != null) {
+        address = firstInputAddress(res.getValue());
+        tip = tipToFeeAddress(res.getValue());
+      }
+    } catch (ApiException e) {
+      // best-effort enrichment; leave defaults
+    }
+    boolean pinned =
+        props.feeEnabled() && props.pinFeeLovelace() > 0 && tip >= props.pinFeeLovelace();
+    return new WallPost(
+        post.author(), post.message(), post.timestamp(), txHash, address, tip, pinned);
+  }
+
+  /** The first input's address - who funded (and therefore signed) the transaction. */
+  private static String firstInputAddress(TxContentUtxo utxo) {
+    if (utxo.getInputs() != null) {
+      for (TxContentUtxoInputs in : utxo.getInputs()) {
+        if (in.getAddress() != null && !in.getAddress().isBlank()) {
+          return in.getAddress();
+        }
+      }
+    }
+    return "";
+  }
+
+  /** Total lovelace this transaction sent to the operator's fee address (0 if the tier is off). */
+  private long tipToFeeAddress(TxContentUtxo utxo) {
+    String fee = props.feeAddress();
+    if (fee.isBlank() || utxo.getOutputs() == null) {
+      return 0;
+    }
+    long sum = 0;
+    for (TxContentUtxoOutputs out : utxo.getOutputs()) {
+      if (fee.equals(out.getAddress()) && out.getAmount() != null) {
+        for (TxContentOutputAmount amt : out.getAmount()) {
+          if ("lovelace".equals(amt.getUnit())) {
+            try {
+              sum += Long.parseLong(amt.getQuantity());
+            } catch (NumberFormatException ignore) {
+              // skip a non-numeric quantity
+            }
           }
         }
       }
-    } catch (ApiException e) {
-      // best-effort enrichment; leave the address empty on failure
     }
-    return "";
+    return sum;
   }
 }

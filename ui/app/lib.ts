@@ -7,7 +7,29 @@ export type Post = {
   timestamp: string;
   txHash: string;
   address: string;
+  tipLovelace: number;
+  pinned: boolean;
 };
+
+/** Fee/pin tier config the backend exposes at /api/config so the UI can render and explain it. */
+export type WallConfig = {
+  feeEnabled: boolean;
+  minFeeLovelace: number;
+  pinFeeLovelace: number;
+  maxPinned: number;
+  pinDurationSeconds: number;
+};
+
+/** Lovelace -> ADA string (1 ADA = 1,000,000 lovelace), trimming trailing zeros. */
+export function lovelaceToAda(lovelace: number): string {
+  const ada = lovelace / 1_000_000;
+  return Number.isInteger(ada) ? String(ada) : ada.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+/** ADA -> lovelace (rounded), for building a tip amount from a user's ADA input. */
+export function adaToLovelace(ada: number): number {
+  return Math.round(ada * 1_000_000);
+}
 
 /** Mirrors the backend default cap (wall.max-message-bytes) so the UI can warn before posting. */
 export const MAX_MESSAGE_BYTES = 4096;
@@ -78,9 +100,9 @@ export function rowToPost(row: { tx_hash?: unknown; json_metadata?: unknown }): 
   const timestamp = typeof j.ts === "string" ? j.ts : "";
   const txHash = typeof row?.tx_hash === "string" ? row.tx_hash : "";
   if (!message || !timestamp) return null;
-  // The chain read-fallback has no cheap way to fetch the payer address, so it stays empty here
-  // (the UI simply omits the verified chip); the backend feed fills it in.
-  return { author, message, timestamp, txHash, address: "" };
+  // The chain read-fallback has no cheap way to fetch the payer address or tip, so those stay empty
+  // here (the UI simply omits the verified chip and pin styling); the backend feed fills them in.
+  return { author, message, timestamp, txHash, address: "", tipLovelace: 0, pinned: false };
 }
 
 /**

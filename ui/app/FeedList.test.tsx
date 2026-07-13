@@ -13,6 +13,8 @@ const post = (over: Partial<Post> = {}): Post => ({
   timestamp: "2026-07-13T09:00:00Z",
   txHash: "deadbeef",
   address: ADDR,
+  tipLovelace: 0,
+  pinned: false,
   ...over,
 });
 
@@ -43,6 +45,18 @@ describe("FeedList", () => {
     const addrLink = screen.getByRole("link", { name: "addr_test1qp...lz6aa7" });
     expect(addrLink).toHaveAttribute("href", `https://preprod.cardanoscan.io/address/${ADDR}`);
     expect(addrLink).toHaveAttribute("title", ADDR); // full address on hover
+  });
+
+  it("marks a pinned post with a PINNED badge and its tip", () => {
+    render(
+      <FeedList
+        posts={[post({ pinned: true, tipLovelace: 5_000_000 })]}
+        network="preprod"
+        nowMs={now}
+        offline={false}
+      />,
+    );
+    expect(screen.getByText(/PINNED - 5 ADA/)).toBeInTheDocument();
   });
 
   it("falls back to 'anon' and omits tx/address links when there is no author, tx, or address", () => {

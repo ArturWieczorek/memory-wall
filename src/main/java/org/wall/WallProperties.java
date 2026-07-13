@@ -20,6 +20,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param maxMessageBytes reject a post whose message exceeds this many UTF-8 bytes (anti-DoS)
  * @param maxTxChars reject a submit whose txCbor/witness hex exceeds this many characters
  *     (anti-DoS)
+ * @param feeAddress operator address that a post pays a tip to; blank = the fee/pin tier is OFF
+ *     (posts are free, the default). When set, a post built by this backend must include a tip of
+ *     at least {@code minFeeLovelace}
+ * @param minFeeLovelace minimum tip (lovelace) required to post when a fee address is set
+ * @param pinFeeLovelace tip (lovelace) at/above which a post is "pinned" (shown first). The feed
+ *     reads the ACTUAL amount paid to {@code feeAddress} from each transaction, so pinning is
+ *     verified on-chain, not self-declared
+ * @param maxPinned how many posts may be pinned at once (the scarce top slots). When more posts are
+ *     eligible, the highest tips win; the rest fall back to the normal feed. {@code <= 0} =
+ *     unlimited
+ * @param pinDurationSeconds how long a pin lasts, from the post's timestamp, before it reverts to a
+ *     normal post. {@code <= 0} = pins never expire
  */
 @ConfigurationProperties(prefix = "wall")
 public record WallProperties(
@@ -30,7 +42,12 @@ public record WallProperties(
     List<String> blocklist,
     List<String> blockedTxHashes,
     Integer maxMessageBytes,
-    Integer maxTxChars) {
+    Integer maxTxChars,
+    String feeAddress,
+    Long minFeeLovelace,
+    Long pinFeeLovelace,
+    Integer maxPinned,
+    Long pinDurationSeconds) {
 
   public WallProperties {
     backendProjectId =
@@ -44,6 +61,17 @@ public record WallProperties(
     blockedTxHashes = blockedTxHashes == null ? List.of() : List.copyOf(blockedTxHashes);
     maxMessageBytes = (maxMessageBytes == null || maxMessageBytes <= 0) ? 4096 : maxMessageBytes;
     maxTxChars = (maxTxChars == null || maxTxChars <= 0) ? 100_000 : maxTxChars;
+    feeAddress = feeAddress == null ? "" : feeAddress.strip();
+    minFeeLovelace = (minFeeLovelace == null || minFeeLovelace < 0) ? 0L : minFeeLovelace;
+    pinFeeLovelace = (pinFeeLovelace == null || pinFeeLovelace < 0) ? 0L : pinFeeLovelace;
+    maxPinned = maxPinned == null ? 3 : maxPinned;
+    pinDurationSeconds =
+        (pinDurationSeconds == null || pinDurationSeconds < 0) ? 604_800L : pinDurationSeconds;
+  }
+
+  /** The fee/pin tier is active only when an operator fee address is configured. */
+  public boolean feeEnabled() {
+    return !feeAddress.isBlank();
   }
 
   /**

@@ -14,9 +14,19 @@ import java.time.Instant;
  * @param address the verified payer address that signed the transaction (empty if not resolved);
  *     the free-text {@code author} is a claim, whereas this is read from the chain and cannot be
  *     faked
+ * @param tipLovelace lovelace paid to the operator's fee address by this post (read from the chain;
+ *     0 if none or the fee tier is off)
+ * @param pinned whether the tip reached the pin threshold, so the post is shown first (verified
+ *     from the on-chain payment, not self-declared)
  */
 public record WallPost(
-    String author, String message, String timestamp, String txHash, String address) {
+    String author,
+    String message,
+    String timestamp,
+    String txHash,
+    String address,
+    long tipLovelace,
+    boolean pinned) {
 
   /** Cardano caps a single metadata text value at 64 bytes; the author must fit in one. */
   public static final int MAX_AUTHOR_BYTES = 64;
@@ -25,6 +35,9 @@ public record WallPost(
     author = author == null ? "" : author;
     txHash = txHash == null ? "" : txHash;
     address = address == null ? "" : address;
+    if (tipLovelace < 0) {
+      tipLovelace = 0;
+    }
     if (author.getBytes(StandardCharsets.UTF_8).length > MAX_AUTHOR_BYTES) {
       throw new IllegalArgumentException("author must be at most " + MAX_AUTHOR_BYTES + " bytes");
     }
@@ -38,12 +51,17 @@ public record WallPost(
 
   /** A post without a known transaction hash or address yet (e.g. while building, or in tests). */
   public WallPost(String author, String message, String timestamp) {
-    this(author, message, timestamp, "", "");
+    this(author, message, timestamp, "", "", 0L, false);
   }
 
   /** A post with a tx hash but no resolved payer address. */
   public WallPost(String author, String message, String timestamp, String txHash) {
-    this(author, message, timestamp, txHash, "");
+    this(author, message, timestamp, txHash, "", 0L, false);
+  }
+
+  /** A post with a tx hash and payer address but no tip/pin info (e.g. the read fallback). */
+  public WallPost(String author, String message, String timestamp, String txHash, String address) {
+    this(author, message, timestamp, txHash, address, 0L, false);
   }
 
   /** A post stamped at {@code when} (supplied for testability). */

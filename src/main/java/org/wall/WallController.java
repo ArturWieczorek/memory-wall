@@ -50,14 +50,38 @@ public class WallController {
     return Map.of("status", "ok");
   }
 
+  /**
+   * Public config the UI needs to render (and explain) the fee/pin tier: whether it is on, the
+   * thresholds, how many pins there are, and how long a pin lasts.
+   */
+  public record ConfigResponse(
+      boolean feeEnabled,
+      long minFeeLovelace,
+      long pinFeeLovelace,
+      int maxPinned,
+      long pinDurationSeconds) {}
+
+  @GetMapping("/config")
+  public ConfigResponse config() {
+    return new ConfigResponse(
+        props.feeEnabled(),
+        props.minFeeLovelace(),
+        props.pinFeeLovelace(),
+        props.maxPinned(),
+        props.pinDurationSeconds());
+  }
+
   @GetMapping("/feed")
   public List<WallPost> feed(@RequestParam(defaultValue = "20") int limit) {
     // Display-side moderation: blocked posts are hidden from the feed (still permanent on-chain).
     return blocklist.filter(feedReader.recent(limit));
   }
 
-  /** Request to build a post tx: who pays/signs (address), the display name, and the message. */
-  public record BuildRequest(String address, String author, String message) {}
+  /**
+   * Request to build a post tx: who pays/signs (address), the display name, the message, and an
+   * optional tip (lovelace) to the operator's fee address when the fee tier is on.
+   */
+  public record BuildRequest(String address, String author, String message, Long tipLovelace) {}
 
   /** Response carrying the unsigned transaction CBOR for the wallet to sign. */
   public record BuildResponse(String txCbor) {}
@@ -74,9 +98,19 @@ public class WallController {
     if (req.address() == null || req.address().isBlank()) {
       return ResponseEntity.badRequest().body("address is required");
     }
+    long tip = 0;
+    if (props.feeEnabled()) {
+      long minFee = props.minFeeLovelace();
+      tip = req.tipLovelace() == null ? minFee : req.tipLovelace();
+      if (tip < minFee) {
+        return ResponseEntity.badRequest()
+            .body("tip too low (min " + minFee + " lovelace to post)");
+      }
+    }
     String author = req.author() == null ? "" : req.author();
     WallPost post = WallPost.create(author, req.message(), Instant.now());
-    return ResponseEntity.ok(new BuildResponse(txBuilder.buildUnsignedHex(req.address(), post)));
+    return ResponseEntity.ok(
+        new BuildResponse(txBuilder.buildUnsignedHex(req.address(), post, tip)));
   }
 
   /** The signed-witness round-trip: the wallet returns a witness; we attach it and submit. */

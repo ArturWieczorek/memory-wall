@@ -11,12 +11,38 @@ class BlocklistTest {
 
   private static Blocklist withTerms(String... terms) {
     return new Blocklist(
-        new WallProperties(null, null, null, null, List.of(terms), List.of(), null, null));
+        new WallProperties(
+            null,
+            null,
+            null,
+            null,
+            List.of(terms),
+            List.of(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null));
   }
 
   private static Blocklist withTxHashes(String... hashes) {
     return new Blocklist(
-        new WallProperties(null, null, null, null, List.of(), List.of(hashes), null, null));
+        new WallProperties(
+            null,
+            null,
+            null,
+            null,
+            List.of(),
+            List.of(hashes),
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null));
   }
 
   private static WallPost post(String author, String message) {
@@ -68,7 +94,10 @@ class BlocklistTest {
   @Test
   @DisplayName("an empty blocklist hides nothing")
   void emptyBlocksNothing() {
-    Blocklist b = new Blocklist(new WallProperties(null, null, null, null, null, null, null, null));
+    Blocklist b =
+        new Blocklist(
+            new WallProperties(
+                null, null, null, null, null, null, null, null, null, null, null, null, null));
     assertThat(b.isBlocked(post("a", "anything at all"))).isFalse();
     assertThat(b.isBlocked(postWithTx("abc123"))).isFalse();
     List<WallPost> posts = List.of(post("a", "one"), post("b", "two"));
