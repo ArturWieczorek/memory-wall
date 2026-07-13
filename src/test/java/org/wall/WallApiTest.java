@@ -1,10 +1,15 @@
 package org.wall;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,6 +37,9 @@ class WallApiTest {
 
   // Replaces BlockfrostFeedReader so we control what the feed returns.
   @MockitoBean private FeedReader feedReader;
+
+  // Replaces the real tx builder so we can simulate a build failure without a chain.
+  @MockitoBean private PostTxBuilder txBuilder;
 
   @Test
   @DisplayName("GET /api/health reports ok (the UI's status probe)")
@@ -121,6 +129,22 @@ class WallApiTest {
                         + huge
                         + "\"}"))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("POST /api/posts/build surfaces the build failure reason (not a bare 500)")
+  void buildSurfacesReason() throws Exception {
+    when(txBuilder.buildUnsignedHex(anyString(), any(), anyLong()))
+        .thenThrow(
+            new IllegalStateException(
+                "failed to build post transaction", new RuntimeException("Not enough funds")));
+
+    mvc.perform(
+            post("/api/posts/build")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"address\":\"addr_test1xyz\",\"message\":\"hi\"}"))
+        .andExpect(status().isBadGateway())
+        .andExpect(content().string(containsString("Not enough funds")));
   }
 
   @Test

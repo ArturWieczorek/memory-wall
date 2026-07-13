@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -115,8 +116,17 @@ public class WallController {
     String color = PinColors.normalize(req.color());
     WallPost post =
         new WallPost(author, req.message(), Instant.now().toString(), "", "", 0L, false, color);
-    return ResponseEntity.ok(
-        new BuildResponse(txBuilder.buildUnsignedHex(req.address(), post, tip)));
+    try {
+      return ResponseEntity.ok(
+          new BuildResponse(txBuilder.buildUnsignedHex(req.address(), post, tip)));
+    } catch (RuntimeException e) {
+      // Surface WHY the build failed (e.g. not enough funds, bad fee address) instead of a bare
+      // 500.
+      // This is the provider/tx-builder's own message - safe to show, and no stack trace leaks.
+      Throwable cause = e.getCause() != null ? e.getCause() : e;
+      return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+          .body("Could not build the transaction: " + cause.getMessage());
+    }
   }
 
   /** The signed-witness round-trip: the wallet returns a witness; we attach it and submit. */
