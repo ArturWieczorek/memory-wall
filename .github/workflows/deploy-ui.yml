@@ -1,0 +1,71 @@
+# Build the Memory Wall UI as a static site and publish it to GitHub Pages.
+#
+# What it does NOT do: it does not deploy the Java backend. The backend runs on your own box behind a
+# tunnel (see infra/AGENT-HANDOFF.md); the browser calls it directly via window.__WALL_API__ set in
+# ui/public/config.js AFTER deploy (no rebuild needed).
+#
+# The site is published under /<repo> (a GitHub "project" Pages site), so we build with
+# WALL_BASE_PATH=/<repo>. If you later move to a custom domain or a <user>.github.io site (served at
+# the root), set WALL_BASE_PATH to an empty string instead.
+name: Deploy UI to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths: [ui/**, .github/workflows/deploy-ui.yml]
+  workflow_dispatch: {}
+
+# Least-privilege token: read the repo, write Pages, mint the OIDC token deploy-pages needs.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy at a time; let an in-progress run finish rather than cancelling it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static export
+        env:
+          WALL_BASE_PATH: /${{ github.event.repository.name }}
+        run: npm run build
+
+      # GitHub Pages runs Jekyll by default, which ignores folders starting with "_" (Next uses
+      # _next/). The artifact-based Pages deploy below skips Jekyll, but .nojekyll is a cheap belt.
+      - name: Disable Jekyll
+        run: touch out/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ui/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
