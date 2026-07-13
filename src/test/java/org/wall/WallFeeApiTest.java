@@ -5,12 +5,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.bloxbean.cardano.client.account.Account;
+import com.bloxbean.cardano.client.common.model.Networks;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,13 +25,18 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest(
     properties = {
       "wall.rate-limit.enabled=false",
-      "wall.fee-address=addr_test1qfeeaddr",
       "wall.min-fee-lovelace=2000000",
       "wall.pin-fee-lovelace=5000000"
     })
 @AutoConfigureMockMvc
 @DisplayName("Wall API - fee tier on")
 class WallFeeApiTest {
+
+  // A real (generated) testnet address, so the startup fee-address validation passes.
+  @DynamicPropertySource
+  static void feeAddress(DynamicPropertyRegistry registry) {
+    registry.add("wall.fee-address", () -> new Account(Networks.testnet()).baseAddress());
+  }
 
   @Autowired private MockMvc mvc;
   @MockitoBean private FeedReader feedReader;

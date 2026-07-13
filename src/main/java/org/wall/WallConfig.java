@@ -2,6 +2,7 @@ package org.wall;
 
 import com.bloxbean.cardano.client.backend.api.BackendService;
 import com.bloxbean.cardano.client.backend.blockfrost.service.BFBackendService;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -14,6 +15,24 @@ public class WallConfig {
   @Bean
   public BackendService backendService(WallProperties props) {
     return new BFBackendService(props.backendUrl(), props.backendProjectId());
+  }
+
+  /**
+   * Fail fast at startup if the fee tier is on but WALL_FEE_ADDRESS is not a real address -
+   * otherwise every post's transaction build would blow up with an opaque error. Better to refuse
+   * to start with a clear message than to accept posts that all fail.
+   */
+  @Bean
+  public InitializingBean validateFeeAddress(WallProperties props) {
+    return () -> {
+      if (props.feeEnabled() && !Addresses.isValid(props.feeAddress())) {
+        throw new IllegalStateException(
+            "WALL_FEE_ADDRESS is not a valid Cardano address: '"
+                + props.feeAddress()
+                + "'. Use a full address you own (addr_test1... on preprod/preview, addr1... on"
+                + " mainnet), or unset it to turn the fee/pin tier off.");
+      }
+    };
   }
 
   /**

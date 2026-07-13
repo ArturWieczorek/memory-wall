@@ -71,6 +71,17 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-13 - fee-address validation (bugfix + hardening)
+- Bug: with the fee tier on, a mis-typed WALL_FEE_ADDRESS (bad Bech32 checksum) made EVERY post's tx
+  build throw "Invalid checksum" -> opaque 500. Root cause found from a live stack trace.
+- Fixes: (1) POST /api/posts/build now catches the build error and returns the real reason (502, no
+  stack trace) instead of a bare 500; (2) Addresses.isValid + a startup InitializingBean in WallConfig
+  fail the app fast with a clear message if the fee tier is on and WALL_FEE_ADDRESS is not a valid
+  address; (3) tests: AddressesTest (valid generated addr + rejects bad checksum/blank/null),
+  WallApiTest.buildSurfacesReason, WallFeeApiTest now uses a generated valid address via
+  @DynamicPropertySource. Backend 43 tests. Lesson logged: validate operator config, and unit-test
+  the validation even when the surrounding tx-build path needs a live chain.
+
 ### 2026-07-13 - Ch 13 Pagination (load more)
 - FeedReader.recent(limit, page) + default recent(limit)=page 1; BlockfrostFeedReader passes page to
   the provider; GET /api/feed?limit&page forwards both. UI: PAGE_SIZE=20, loadFeed resets to page 1,
