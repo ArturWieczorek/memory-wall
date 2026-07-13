@@ -14,9 +14,12 @@ java {
 
 dependencies {
     // Spring Boot backend (BOM-managed; web + test starters only).
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.4.13"))
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.16"))
     implementation("org.springframework.boot:spring-boot-starter-web")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    // Align the JUnit Platform launcher with the (newer) JUnit the Boot 3.5 BOM pulls in;
+    // Gradle 8.10.2 bundles an older launcher, which otherwise crashes the test executor.
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Cardano: build/submit transactions, read metadata, talk to a Blockfrost-compatible backend.
     implementation("com.bloxbean.cardano:cardano-client-lib:0.7.2")
