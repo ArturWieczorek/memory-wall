@@ -178,6 +178,12 @@ systemctl --user status memory-wall     # should be "active (running)"
 curl https://wall.yourdomain.com/api/health         # -> {"status":"ok"}
 ```
 
+## Step 4e - harden the Cloudflare edge (free; recommended for a named tunnel)
+Turn on rate limiting, bot filtering, and confirm DDoS protection at Cloudflare, so abuse is stopped
+before it reaches your box or your Blockfrost quota. Click-by-click, beginner-friendly guide (with
+what each setting protects from and exactly where to find it): see
+**[CLOUDFLARE-HARDENING.md](CLOUDFLARE-HARDENING.md)**.
+
 ## Step 5 - point the hosted UI at the tunnel
 The Pages site is static, so you change its backend URL by editing `ui/public/config.js` and pushing
 (the deploy workflow rebuilds in ~30s - you cannot edit files on Pages directly):
