@@ -53,6 +53,9 @@ export default function Home() {
   const [pinColor, setPinColor] = useState("");
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [searchResults, setSearchResults] = useState<Post[]>([]);
+  const [searchPage, setSearchPage] = useState(1);
+  const [searchHasMore, setSearchHasMore] = useState(false);
 
   // Fetch the fee/pin tier config once, so we know whether to show the tip field + rules.
   async function loadConfig() {
@@ -120,6 +123,26 @@ export default function Home() {
     }
   }
 
+  // Full-history search against the backend index (page 1 resets; higher pages append, de-duped).
+  async function runSearch(q: string, p: number) {
+    try {
+      const res = await fetch(
+        `${apiBase()}/api/search?q=${encodeURIComponent(q)}&limit=${PAGE_SIZE}&page=${p}`,
+      );
+      if (!res.ok) return;
+      const posts = (await res.json()) as Post[];
+      setSearchResults((prev) =>
+        p === 1
+          ? posts
+          : [...prev, ...posts.filter((x) => !prev.some((y) => y.txHash === x.txHash))],
+      );
+      setSearchPage(p);
+      setSearchHasMore(posts.length >= PAGE_SIZE);
+    } catch {
+      /* ignore - search is best-effort */
+    }
+  }
+
   // Read-only fallback: pull posts straight from Blockfrost when the backend is offline.
   async function loadFeedFromChain() {
     const key = bfKey.trim();
@@ -161,6 +184,19 @@ export default function Home() {
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Debounced full-history search: when there's a query and the backend is up, query /api/search.
+  useEffect(() => {
+    if (!query.trim() || health !== "online") {
+      setSearchResults([]);
+      setSearchHasMore(false);
+      return;
+    }
+    const q = query.trim();
+    const id = setTimeout(() => void runSearch(q, 1), 300);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, health]);
 
   function toggleTheme() {
     const t = nextTheme(theme);
@@ -244,7 +280,12 @@ export default function Home() {
   const authorBytes = byteLength(author);
   const authorOver = authorBytes > MAX_AUTHOR_BYTES;
   const nowMs = Date.now();
-  const visible = filterPosts(feed, query);
+  const online = health === "online";
+  // Online + a query -> full-history results from /api/search; otherwise the loaded feed (filtered
+  // client-side when offline). "Load more" pages the feed, or the search results in search mode.
+  const searchMode = query.trim().length > 0 && online;
+  const visible = searchMode ? searchResults : filterPosts(feed, query);
+  const showLoadMore = online && (searchMode ? searchHasMore : !query.trim() && hasMore);
   const feeOn = config?.feeEnabled ?? false;
   const tipLov = adaToLovelace(Number(tipAda) || 0);
   const belowMin = feeOn && !!config && tipLov < config.minFeeLovelace;
@@ -418,30 +459,37 @@ export default function Home() {
       )}
 
       <h2>The wall</h2>
-      {feed.length > 0 && (
+      {(online || feed.length > 0) && (
         <div style={{ margin: "4px 0 12px" }}>
           <input
             style={{ width: "100%" }}
-            placeholder="Search the loaded posts (author or message)..."
+            placeholder="Search posts (author or message)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
           {query.trim() && (
             <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
-              {visible.length} of {feed.length} loaded posts match. Searches only the loaded window,
-              not the full history.
+              {searchMode
+                ? `Searching all posts - ${visible.length} result${visible.length === 1 ? "" : "s"}${searchHasMore ? "+" : ""}.`
+                : `${visible.length} of ${feed.length} loaded posts match (offline: only the loaded window).`}
             </div>
           )}
         </div>
       )}
-      {query.trim() && visible.length === 0 && feed.length > 0 ? (
-        <p style={{ color: "var(--muted)" }}>No loaded posts match &quot;{query.trim()}&quot;.</p>
+      {query.trim() && visible.length === 0 ? (
+        <p style={{ color: "var(--muted)" }}>No posts match &quot;{query.trim()}&quot;.</p>
       ) : (
         <FeedList posts={visible} network={network()} nowMs={nowMs} offline={offline} />
       )}
-      {health === "online" && hasMore && (
+      {showLoadMore && (
         <div style={{ textAlign: "center", marginTop: 12 }}>
-          <button onClick={() => void loadMore()}>Load more</button>
+          <button
+            onClick={() =>
+              searchMode ? void runSearch(query.trim(), searchPage + 1) : void loadMore()
+            }
+          >
+            Load more
+          </button>
         </div>
       )}
     </main>

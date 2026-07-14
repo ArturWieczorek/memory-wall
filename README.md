@@ -14,7 +14,7 @@ The value is the permanent message, not money, so it is just as meaningful on a 
   wallet signs and pays, the backend never holds keys.
 
 This is also a step-by-step, test-driven **course**: each chapter under `chapters/NN-*/README.md`
-builds one piece, and each is one git commit + tag (`ch00` ... `ch13`). Start at
+builds one piece, and each is one git commit + tag (`ch00` ... `ch14`). Start at
 `chapters/00-orientation/README.md`.
 
 ---
@@ -142,8 +142,9 @@ Does NOT:
   name. Trust the verified address, not the name.
 - **Moderation is display-side only** - the blocklist / blocked-tx-hashes hide posts from *this* feed;
   they cannot remove anything from the chain, and other frontends still show them.
-- **Search + pinning act on the loaded window** - not the full history (that needs an indexer; see
-  `docs/BACKLOG.md`).
+- **The index is in-memory** - full-history search + global pinning work, but the cache rebuilds on
+  restart (a persistent store is still on `docs/BACKLOG.md`); while offline, the UI's search falls
+  back to just the loaded window.
 - **Post only what you are comfortable being public and permanent.**
 
 ## The course
@@ -166,6 +167,7 @@ Each chapter is a self-contained lesson under `chapters/` (one git tag each, `ch
 | 11 | Fee + pin tier - tip to post, tip more to pin (scarce, competitive, time-limited) |
 | 12 | Pin colour palette - payer picks a pastel, stored on-chain |
 | 13 | Pagination - "Load more" |
+| 14 | Indexer - full-history search + global pinning (in-memory cache of all posts) |
 
 Roadmap and out-of-scope decisions (with reasons): `docs/BACKLOG.md`.
 

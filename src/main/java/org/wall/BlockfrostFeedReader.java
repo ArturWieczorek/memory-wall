@@ -35,6 +35,15 @@ public class BlockfrostFeedReader implements FeedReader {
 
   @Override
   public List<WallPost> recent(int limit, int page) {
+    return Feed.forDisplay(
+        pageRaw(limit, page), props.maxPinned(), Instant.now(), props.pinDurationSeconds());
+  }
+
+  /**
+   * One page of posts (parsed + enriched with address/tip), UNORDERED - the raw material the {@link
+   * WallIndex} accumulates across all pages to build a full-history cache.
+   */
+  public List<WallPost> pageRaw(int limit, int page) {
     int p = Math.max(1, page);
     try {
       Result<List<MetadataJSONContent>> result =
@@ -52,7 +61,7 @@ public class BlockfrostFeedReader implements FeedReader {
           posts.add(enrich(post, content.getTxHash()));
         }
       }
-      return Feed.forDisplay(posts, props.maxPinned(), Instant.now(), props.pinDurationSeconds());
+      return posts;
     } catch (ApiException e) {
       throw new IllegalStateException("feed query failed", e);
     }

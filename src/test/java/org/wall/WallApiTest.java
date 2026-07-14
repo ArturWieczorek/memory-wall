@@ -2,10 +2,8 @@ package org.wall;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -14,7 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +35,8 @@ class WallApiTest {
 
   @Autowired private MockMvc mvc;
 
-  // Replaces BlockfrostFeedReader so we control what the feed returns.
-  @MockitoBean private FeedReader feedReader;
+  // Replaces the full-history index so we control what the feed/search see (no chain).
+  @MockitoBean private WallIndex index;
 
   // Replaces the real tx builder so we can simulate a build failure without a chain.
   @MockitoBean private PostTxBuilder txBuilder;
@@ -58,15 +58,16 @@ class WallApiTest {
   }
 
   @Test
-  @DisplayName("GET /api/feed returns recent posts (with tip + pinned)")
+  @DisplayName("GET /api/feed returns posts (with tip + pinned) served from the index")
   void feed() throws Exception {
-    when(feedReader.recent(anyInt(), anyInt()))
+    // A fresh timestamp so the pin is still within its window after the controller's forDisplay.
+    when(index.allPosts())
         .thenReturn(
             List.of(
                 new WallPost(
                     "alice",
                     "gm cardano",
-                    "2026-06-30T12:00:00Z",
+                    Instant.now().toString(),
                     "tx123",
                     "addr_test1qalice",
                     5_000_000L,
@@ -97,14 +98,35 @@ class WallApiTest {
   }
 
   @Test
-  @DisplayName("GET /api/feed forwards the page param to the reader")
-  void feedForwardsPage() throws Exception {
-    when(feedReader.recent(eq(20), eq(2)))
-        .thenReturn(List.of(new WallPost("bob", "page two", "2026-06-30T11:00:00Z")));
+  @DisplayName("GET /api/feed paginates over the whole index (page 2 of 25 -> 5 posts)")
+  void feedPaginates() throws Exception {
+    List<WallPost> many =
+        IntStream.range(0, 25)
+            .mapToObj(
+                i ->
+                    new WallPost(
+                        "u" + i, "m" + i, String.format("2026-06-30T10:%02d:00Z", i), "tx" + i))
+            .toList();
+    when(index.allPosts()).thenReturn(many);
 
     mvc.perform(get("/api/feed").param("limit", "20").param("page", "2"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$[0].message").value("page two"));
+        .andExpect(jsonPath("$.length()").value(5));
+  }
+
+  @Test
+  @DisplayName("GET /api/search matches author/message across ALL posts (full history)")
+  void search() throws Exception {
+    when(index.allPosts())
+        .thenReturn(
+            List.of(
+                new WallPost("ada", "hello cardano", "2026-06-30T12:00:00Z", "txA"),
+                new WallPost("bob", "bye", "2026-06-30T11:00:00Z", "txB")));
+
+    mvc.perform(get("/api/search").param("q", "cardano"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].message").value("hello cardano"));
   }
 
   @Test

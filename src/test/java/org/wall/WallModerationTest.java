@@ -1,6 +1,5 @@
 package org.wall;
 
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -22,12 +21,12 @@ import org.springframework.test.web.servlet.MockMvc;
 class WallModerationTest {
 
   @Autowired private MockMvc mvc;
-  @MockitoBean private FeedReader feedReader;
+  @MockitoBean private WallIndex index;
 
   @Test
   @DisplayName("GET /api/feed hides posts matching the blocklist")
   void feedHidesBlocked() throws Exception {
-    when(feedReader.recent(anyInt(), anyInt()))
+    when(index.allPosts())
         .thenReturn(
             List.of(
                 new WallPost("alice", "clean post", "2026-06-30T12:01:00Z"),

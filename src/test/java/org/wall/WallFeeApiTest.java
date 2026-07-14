@@ -39,7 +39,9 @@ class WallFeeApiTest {
   }
 
   @Autowired private MockMvc mvc;
-  @MockitoBean private FeedReader feedReader;
+
+  @MockitoBean
+  private WallIndex index; // mocked so no real chain/refresh runs (feed not exercised here)
 
   @Test
   @DisplayName("GET /api/config reports the fee tier ON with its thresholds")

@@ -70,6 +70,34 @@ public final class Feed {
     }
   }
 
+  /**
+   * Posts whose author or message contains {@code q} (case-insensitive). A blank query returns the
+   * list unchanged. Pure - used for full-history search over the index.
+   */
+  public static List<WallPost> search(List<WallPost> posts, String q) {
+    String needle = q == null ? "" : q.trim().toLowerCase();
+    if (needle.isEmpty()) {
+      return posts;
+    }
+    return posts.stream()
+        .filter(p -> (p.author() + " " + p.message()).toLowerCase().contains(needle))
+        .toList();
+  }
+
+  /**
+   * One page (1-based) of at most {@code limit} items from an already-ordered list. Out-of-range
+   * pages return empty. {@code limit <= 0} defaults to 20.
+   */
+  public static List<WallPost> page(List<WallPost> posts, int limit, int page) {
+    int lim = limit <= 0 ? 20 : limit;
+    int p = Math.max(1, page);
+    int from = (p - 1) * lim;
+    if (from >= posts.size()) {
+      return List.of();
+    }
+    return List.copyOf(posts.subList(from, Math.min(from + lim, posts.size())));
+  }
+
   /** A copy of {@code p} with {@code pinned=false} (missed a slot, or its window expired). */
   private static WallPost demote(WallPost p) {
     return new WallPost(

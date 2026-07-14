@@ -81,6 +81,33 @@ class FeedAndParseTest {
   }
 
   @Test
+  @DisplayName("search matches author or message (case-insensitive); blank q returns all")
+  void search() {
+    WallPost a = plain("hello cardano", "2026-06-30T10:00:00Z");
+    WallPost b = new WallPost("Cardano fan", "gm", "2026-06-30T11:00:00Z", "tx-b");
+    WallPost c = plain("nothing here", "2026-06-30T12:00:00Z");
+    var all = List.of(a, b, c);
+    assertThat(Feed.search(all, "cardano")).containsExactly(a, b); // in message, and in author
+    assertThat(Feed.search(all, "GM")).containsExactly(b); // case-insensitive
+    assertThat(Feed.search(all, "zzz")).isEmpty();
+    assertThat(Feed.search(all, "  ")).isEqualTo(all); // blank -> all
+  }
+
+  @Test
+  @DisplayName("page returns the right 1-based slice; out-of-range pages are empty")
+  void page() {
+    List<WallPost> ten =
+        java.util.stream.IntStream.range(0, 10)
+            .mapToObj(i -> plain("m" + i, "2026-06-30T10:00:0" + i + "Z"))
+            .toList();
+    assertThat(Feed.page(ten, 4, 1))
+        .extracting(WallPost::message)
+        .containsExactly("m0", "m1", "m2", "m3");
+    assertThat(Feed.page(ten, 4, 3)).extracting(WallPost::message).containsExactly("m8", "m9");
+    assertThat(Feed.page(ten, 4, 4)).isEmpty();
+  }
+
+  @Test
   @DisplayName("forDisplay expires a pin past its window (it becomes a normal post)")
   void forDisplayExpiry() {
     WallPost oldPin = pinned("stale pin", "2026-06-01T00:00:00Z", 9_000_000L);

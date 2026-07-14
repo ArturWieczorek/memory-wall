@@ -26,19 +26,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class WallController {
 
-  private final FeedReader feedReader;
+  private final WallIndex index;
   private final PostTxBuilder txBuilder;
   private final SubmitService submitService;
   private final Blocklist blocklist;
   private final WallProperties props;
 
   public WallController(
-      FeedReader feedReader,
+      WallIndex index,
       PostTxBuilder txBuilder,
       SubmitService submitService,
       Blocklist blocklist,
       WallProperties props) {
-    this.feedReader = feedReader;
+    this.index = index;
     this.txBuilder = txBuilder;
     this.submitService = submitService;
     this.blocklist = blocklist;
@@ -77,8 +77,25 @@ public class WallController {
   @GetMapping("/feed")
   public List<WallPost> feed(
       @RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "1") int page) {
-    // Display-side moderation: blocked posts are hidden from the feed (still permanent on-chain).
-    return blocklist.filter(feedReader.recent(limit, page));
+    // Served from the full-history index: moderation, then GLOBAL pin ordering (pins rise above the
+    // whole wall, not just this page), then the requested page.
+    List<WallPost> ordered =
+        Feed.forDisplay(
+            blocklist.filter(index.allPosts()),
+            props.maxPinned(),
+            Instant.now(),
+            props.pinDurationSeconds());
+    return Feed.page(ordered, limit, page);
+  }
+
+  /** Full-history search: matches author/message across ALL posts, newest-first, paginated. */
+  @GetMapping("/search")
+  public List<WallPost> search(
+      @RequestParam(defaultValue = "") String q,
+      @RequestParam(defaultValue = "20") int limit,
+      @RequestParam(defaultValue = "1") int page) {
+    List<WallPost> hits = Feed.newestFirst(Feed.search(blocklist.filter(index.allPosts()), q));
+    return Feed.page(hits, limit, page);
   }
 
   /**

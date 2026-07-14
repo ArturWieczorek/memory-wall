@@ -5,9 +5,10 @@
 ## Current state
 - Status: LIVE + iterating. Core (Ch 00-06) complete and deployed (repo public; UI on GitHub Pages;
   backend runnable from home via a tunnel). Now adding polish/feature chapters from docs/BACKLOG.md:
-  Ch 07-13 DONE: UX polish, verified author identity, CI + GitHub security, search + precise
-  moderation, fee + pin tier, pin colour palette, pagination. Next up when wanted: stable Tailscale
-  hosting, or the bigger backlog items (indexer for full-history search + global pinning, images).
+  Ch 07-14 DONE: UX polish, verified author identity, CI + GitHub security, search + precise
+  moderation, fee + pin tier, pin colour palette, pagination, indexer (full-history search + global
+  pinning). Live behind a stable Cloudflare named tunnel (wall.arturwieczorek.com) + CF hardening.
+  Remaining backlog: images (deferred), optional persistent index store.
 - (Historical) Ch 06 adds hardening for public self-hosting from a home box:
   /health + UI status light, CORS, per-IP rate limit, display-side blocklist moderation, a
   Blockfrost read-only fallback when the backend is down, and runtime-configurable backend URL.
@@ -55,7 +56,8 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 10 | Search + precise moderation | [x] | ch10 | client-side feed search (filterPosts, loaded window only); tx-hash curator moderation (wall.blocked-tx-hashes) alongside the term blocklist |
 | 11 | Fee + pin tier | [x] | ch11 | optional tip-to-post / tip-more-to-pin; scarce+competitive+time-limited pins verified on-chain; /api/config; UI tip field + rules + pinned pastel/badge; stateless (no queue) |
 | 12 | Pin colour palette | [x] | ch12 | payer picks a pastel (fixed 6-colour palette) when pinning; stored on-chain (metadata c), safe-validated on write + read; rendered behind the pin; PinColors + /api/config palette |
-| 13 | Pagination / load more | [x] | ch13 | FeedReader.recent(limit,page) + /api/feed?page; UI "Load more" appends next page (de-duped, short-page hides button). Pins/search act on the loaded window (full-history = indexer, backlog) |
+| 13 | Pagination / load more | [x] | ch13 | FeedReader.recent(limit,page) + /api/feed?page; UI "Load more" appends next page (de-duped, short-page hides button) |
+| 14 | Indexer (full-history search + global pinning) | [x] | ch14 | in-memory WallIndex (incremental refresh) caches all posts; /api/feed pins globally, new /api/search over all history; UI search hits backend (debounced), offline falls back to client filter |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -71,6 +73,20 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 - 2026-06-30 - Front end = Next.js + CIP-30 wallet (user choice). Architecture: Java/Spring backend builds an UNSIGNED post tx + serves the feed; the browser wallet signs + submits (no server keys). Metadata-first (label 1719); messages chunked to 64-byte text values. (An earlier mis-click briefly selected CLI; corrected to web UI.)
 
 ## Session log
+### 2026-07-15 - Ch 14 Indexer (full-history search + global pinning)
+- WallIndex: in-memory cache of ALL posts, keyed by txHash, refreshed on a schedule
+  (@EnableScheduling; wall.index.refresh-ms default 60s) - INCREMENTAL: pages newest-first, stops when
+  a page adds nothing new (steady state) or a short page ends history. Best-effort (provider hiccup
+  keeps the last cache). Reuses BlockfrostFeedReader.pageRaw (extracted: parse+enrich, unordered).
+- Controller now serves feed + search from the index: /api/feed = moderate -> Feed.forDisplay
+  (GLOBAL pin ordering) -> Feed.page; new /api/search?q= = moderate -> Feed.search -> newestFirst ->
+  page. Feed gained pure search() + page() (tested). Controller depends on WallIndex (tests mock it).
+- UI: search box hits /api/search (debounced) when online = full history + Load more; offline falls
+  back to client filterPosts over the loaded window (hint says which). Global pinning is automatic
+  (UI renders whatever /api/feed returns).
+- Trade-off: in-memory (re-ingests on restart); persistent store (SQLite) still deferred. Tests:
+  backend 51, UI 33; typecheck + build green. Tag ch14.
+
 ### 2026-07-13 - fee-address validation (bugfix + hardening)
 - Bug: with the fee tier on, a mis-typed WALL_FEE_ADDRESS (bad Bech32 checksum) made EVERY post's tx
   build throw "Invalid checksum" -> opaque 500. Root cause found from a live stack trace.
