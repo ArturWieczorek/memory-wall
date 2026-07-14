@@ -49,18 +49,19 @@ These are the three areas chosen on 2026-07-13 (tiers B, C, and D-minus-systemd 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Client-side search/filter | `[x]` (ch10) | `filterPosts` over the loaded feed (author/message substring); search box + "N of M" hint + no-match state. Recent window only (labelled as such in the UI). |
-| Full-history search + global pinning | `[x]` (ch14) | In-memory `WallIndex` ingests all posts (incremental refresh); `/api/search` searches every post and the feed pins/orders globally. In-memory (re-ingests on restart); persistent store still deferred. |
+| Full-history search + global pinning | `[x]` (ch14) | In-memory `WallIndex` ingests all posts (incremental refresh); `/api/search` searches every post and the feed pins/orders globally. |
+| Persistent index store (survive restarts) | `[x]` (ch15) | Optional SQLite store behind a `PostStore` seam (default = in-memory no-op, unchanged). Set `wall.index.db-path` to persist; the index seeds from it on startup (warm start) and saves only new posts. One dependency (`sqlite-jdbc`), inert unless enabled. Roundtrip + seed/save unit-tested. |
 | Pagination / "load more" | `[x]` (ch13) | Feed reader + `/api/feed` take a `page`; UI "Load more" appends the next page (de-duped by tx hash), hidden on a short page. Pins/search still act on the loaded window (full-history needs the indexer). |
 | Pin colour (payer palette) | `[x]` (ch12) | Poster picks a pastel from a fixed 6-colour palette when pinning; stored on-chain (`c`), safe-validated on write + read, rendered behind the pin. Emerged from the Ch11 design chat. |
 | Fee + pin tier | `[x]` (ch11) | Optional tier (off by default). Tip >= min to post, >= pin-fee to pin. Scarce slots (max-pinned), competitive (highest tip, can bump), time-limited (pin-duration, default 7d), verified on-chain. Stateless (no queue). Default pastel for pins; payer palette = ch12. |
 | Tx-hash curator moderation | `[x]` (ch10) | `wall.blocked-tx-hashes` hides an exact post by tx hash (scalpel), alongside the term blocklist (broad brush). Display-side only. |
-| Stable public hosting | `[~]` | Quick Cloudflare tunnel working; Tailscale Funnel for a stable URL is the next hosting step (`infra/HOSTING.md`). |
+| Stable public hosting | `[x]` | Live on a stable Cloudflare **named** tunnel (`wall.arturwieczorek.com`) on the operator's own domain + free Cloudflare edge hardening (rate limit, Bot Fight, DDoS). Full runbook in `infra/HOSTING.md`; hardening in `infra/CLOUDFLARE-HARDENING.md`. |
 
 ## Deferred - designed, held back on purpose
 
 | Feature | Status | Why held |
 |---------|--------|----------|
-| Image posts + admin approval queue | `[ ]` | Fully designed in `docs/future-images.md`. Real weight: SSRF (server fetching attacker URLs) and legal duties (CSAM). The only genuinely wall-relevant "big" feature, but it needs its own careful chapter. |
+| Image posts + admin approval queue | `[ ]` | Designed in `docs/future-images.md`; threat-analysed in `docs/IMAGE-POSTS-THREAT-ANALYSIS.md`. Real weight: SSRF (server fetching attacker URLs) and legal duties (CSAM). Safe path if built: link-only + `imgHash`-pinned + default-deny + tailnet-bound admin + click-to-load, NO server fetch/rehost/ML, testnet-first, needs Terms + legal posture. The only genuinely wall-relevant "big" feature, but it needs its own careful chapter. |
 
 ## Out of scope for Memory Wall
 

@@ -3,6 +3,7 @@ package org.wall;
 import com.bloxbean.cardano.client.backend.api.BackendService;
 import com.bloxbean.cardano.client.backend.blockfrost.service.BFBackendService;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -15,6 +16,18 @@ public class WallConfig {
   @Bean
   public BackendService backendService(WallProperties props) {
     return new BFBackendService(props.backendUrl(), props.backendProjectId());
+  }
+
+  /**
+   * Where the full-history index keeps its copy of the wall. Default: in-memory only (re-ingests on
+   * restart). Set {@code wall.index.db-path} (e.g. {@code data/wall-index.db}) to persist it to a
+   * SQLite file, so a restart starts warm and only fetches new posts.
+   */
+  @Bean
+  public PostStore postStore(@Value("${wall.index.db-path:}") String dbPath) {
+    return (dbPath == null || dbPath.isBlank())
+        ? new NoopPostStore()
+        : new SqlitePostStore(dbPath.trim());
   }
 
   /**

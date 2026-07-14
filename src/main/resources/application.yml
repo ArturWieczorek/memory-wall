@@ -34,6 +34,17 @@ wall:
   # Reject a submit whose txCbor/witness hex exceeds this many characters.
   max-tx-chars: ${WALL_MAX_TX_CHARS:100000}
 
+  # Full-history index (the in-memory cache of every post that powers global pinning + search).
+  index:
+    # Refresh cadence (ms) and paging limits when reading the chain. Defaults are fine.
+    refresh-ms: ${WALL_INDEX_REFRESH_MS:60000}
+    page-size: ${WALL_INDEX_PAGE_SIZE:100}
+    max-pages: ${WALL_INDEX_MAX_PAGES:500}
+    # OPTIONAL persistence. Blank = in-memory only (re-ingests from the chain on restart). Set a
+    # file path (e.g. data/wall-index.db) to persist the index to SQLite, so a restart starts warm
+    # and only fetches new posts. The file is a local cache of PUBLIC on-chain data - no secrets.
+    db-path: ${WALL_INDEX_DB_PATH:}
+
   # Display-side moderation: comma-separated terms; a post whose author or message contains one is
   # hidden from the feed (it is still permanent on-chain - we just do not show it).
   blocklist: ${WALL_BLOCKLIST:}

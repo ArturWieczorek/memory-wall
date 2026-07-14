@@ -5,10 +5,12 @@
 ## Current state
 - Status: LIVE + iterating. Core (Ch 00-06) complete and deployed (repo public; UI on GitHub Pages;
   backend runnable from home via a tunnel). Now adding polish/feature chapters from docs/BACKLOG.md:
-  Ch 07-14 DONE: UX polish, verified author identity, CI + GitHub security, search + precise
+  Ch 07-15 DONE: UX polish, verified author identity, CI + GitHub security, search + precise
   moderation, fee + pin tier, pin colour palette, pagination, indexer (full-history search + global
-  pinning). Live behind a stable Cloudflare named tunnel (wall.arturwieczorek.com) + CF hardening.
-  Remaining backlog: images (deferred), optional persistent index store.
+  pinning), durable index (optional SQLite store). Live behind a stable Cloudflare named tunnel
+  (wall.arturwieczorek.com) + CF hardening.
+  Remaining backlog: images + admin approval queue (deferred; threat-analysed - link-only,
+  default-deny, no server fetch; needs Terms + legal posture before build).
 - (Historical) Ch 06 adds hardening for public self-hosting from a home box:
   /health + UI status light, CORS, per-IP rate limit, display-side blocklist moderation, a
   Blockfrost read-only fallback when the backend is down, and runtime-configurable backend URL.
@@ -58,6 +60,7 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
 | 12 | Pin colour palette | [x] | ch12 | payer picks a pastel (fixed 6-colour palette) when pinning; stored on-chain (metadata c), safe-validated on write + read; rendered behind the pin; PinColors + /api/config palette |
 | 13 | Pagination / load more | [x] | ch13 | FeedReader.recent(limit,page) + /api/feed?page; UI "Load more" appends next page (de-duped, short-page hides button) |
 | 14 | Indexer (full-history search + global pinning) | [x] | ch14 | in-memory WallIndex (incremental refresh) caches all posts; /api/feed pins globally, new /api/search over all history; UI search hits backend (debounced), offline falls back to client filter |
+| 15 | Durable index (optional SQLite store) | [x] | ch15 | PostStore seam: default NoopPostStore (in-memory, unchanged) or SqlitePostStore when wall.index.db-path set; index seeds from store on startup (warm start) + saves only new posts; sqlite-jdbc dep, inert unless enabled; roundtrip + seed/save unit tests |
 
 ## Pinned tool versions
 | Tool | Version |
@@ -86,6 +89,26 @@ Legend: [ ] not started - [~] in progress - [x] done - [blocked] blocked
   (UI renders whatever /api/feed returns).
 - Trade-off: in-memory (re-ingests on restart); persistent store (SQLite) still deferred. Tests:
   backend 51, UI 33; typecheck + build green. Tag ch14.
+
+### 2026-07-15 - Ch 15 Durable index (optional SQLite store)
+- Backlog hygiene first: flipped "Stable public hosting" to [x] (live on the CF named tunnel +
+  hardening).
+- New PostStore seam so WallIndex does not care HOW posts are stored. NoopPostStore (default: no
+  persistence, in-memory only = unchanged Ch14 behaviour) vs SqlitePostStore (opt-in: single SQLite
+  file, one posts table keyed by tx_hash, INSERT OR IGNORE = idempotent, SELECT ... ORDER BY
+  timestamp DESC). WallConfig.postStore picks by wall.index.db-path (blank -> noop; path -> sqlite).
+- WallIndex: seeds its map from store.loadAll() on construction (warm start; best-effort, tolerates a
+  read failure) and store.save(newlyAdded) after each refresh (only new posts). Display re-orders, so
+  seed order is not load-bearing.
+- Dependency: org.xerial:sqlite-jdbc 3.47.1.0 (inert unless db-path set). *.db/*.sqlite already
+  gitignored; the file is a cache of PUBLIC on-chain data (no secrets).
+- Tests: SqlitePostStoreTest (real @TempDir DB: roundtrip newest-first, idempotent, survives-restart,
+  skips no-hash, empty no-op) + WallIndexTest (seeds from store, saves only new, tolerates load
+  failure). Backend +8 (now 59 test methods), UI 33; spotless + build green. Tag ch15.
+- Also: ran a Plan-agent threat analysis of the deferred "image posts + admin queue" feature - saved
+  as docs/IMAGE-POSTS-THREAT-ANALYSIS.md (SSRF, CSAM/legal, storage models, decoder/DoS, admin attack
+  surface, permanence bypass). Verdict: link-only + imgHash-pinned + default-deny + tailnet-bound
+  admin + click-to-load + NO server fetch/rehost/ML; needs Terms + legal posture; testnet-first.
 
 ### 2026-07-13 - fee-address validation (bugfix + hardening)
 - Bug: with the fee tier on, a mis-typed WALL_FEE_ADDRESS (bad Bech32 checksum) made EVERY post's tx

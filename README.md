@@ -14,7 +14,7 @@ The value is the permanent message, not money, so it is just as meaningful on a 
   wallet signs and pays, the backend never holds keys.
 
 This is also a step-by-step, test-driven **course**: each chapter under `chapters/NN-*/README.md`
-builds one piece, and each is one git commit + tag (`ch00` ... `ch14`). Start at
+builds one piece, and each is one git commit + tag (`ch00` ... `ch15`). Start at
 `chapters/00-orientation/README.md`.
 
 ---
@@ -158,7 +158,7 @@ Does NOT:
 
 ## The course
 
-Each chapter is a self-contained lesson under `chapters/` (one git tag each, `ch00` ... `ch13`):
+Each chapter is a self-contained lesson under `chapters/` (one git tag each, `ch00` ... `ch15`):
 
 | Ch | Title |
 |----|-------|
@@ -177,6 +177,7 @@ Each chapter is a self-contained lesson under `chapters/` (one git tag each, `ch
 | 12 | Pin colour palette - payer picks a pastel, stored on-chain |
 | 13 | Pagination - "Load more" |
 | 14 | Indexer - full-history search + global pinning (in-memory cache of all posts) |
+| 15 | Durable index - optional SQLite store so the index survives a restart |
 
 Roadmap and out-of-scope decisions (with reasons): `docs/BACKLOG.md`.
 
