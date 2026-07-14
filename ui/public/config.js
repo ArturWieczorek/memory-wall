@@ -5,7 +5,7 @@
 //   Example: window.__WALL_API__ = "https://mybox.tailXXXX.ts.net";
 //
 // __WALL_NETWORK__ : which network the read-only fallback queries (preprod | preview | mainnet).
-// NOTE: this is an ephemeral Cloudflare "quick tunnel" URL - it changes each time cloudflared
-// restarts. For a stable address, switch to Tailscale Funnel (see infra/HOSTING.md) and update this.
-window.__WALL_API__ = "https://mounted-msgstr-bright-symposium.trycloudflare.com";
+// Stable Cloudflare named-tunnel URL (wall.arturwieczorek.com -> home backend on :8090). Permanent -
+// unlike the old quick-tunnel URL, this does not change when cloudflared restarts.
+window.__WALL_API__ = "https://wall.arturwieczorek.com";
 window.__WALL_NETWORK__ = "preprod";
