@@ -107,12 +107,21 @@ export WALL_BACKEND_PROJECT_ID=preprodXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  # secret
 ```
 Then pick a tunnel and point `ui/public/config.js` `__WALL_API__` at its URL:
 - **Quick tunnel** (throwaway test): `cloudflared tunnel --url http://localhost:8090`
-- **Cloudflare named tunnel** (stable custom URL on your own domain) - recommended
+- **Cloudflare named tunnel** (stable custom URL on your own domain) - recommended:
+  ```bash
+  cloudflared tunnel login                                        # authorize your Cloudflare domain
+  cloudflared tunnel create memory-wall                           # note the tunnel id + creds path
+  cloudflared tunnel route dns memory-wall wall.yourdomain.com    # add the DNS record
+  # write ~/.cloudflared/config.yml (tunnel id, creds file, ingress -> http://localhost:8090), then:
+  cloudflared tunnel run memory-wall                              # run it (foreground)
+  sudo cloudflared service install                                # or: auto-start on boot (systemd)
+  ```
 - **Tailscale Funnel** (stable URL, no domain)
 
-Full step-by-step for each - including running the tunnel **on demand, in the background, or as a
-boot service (systemd)**, an optional backend systemd unit, and the fee/pin tier - is in
-**[infra/HOSTING.md](infra/HOSTING.md)**.
+Full step-by-step for each - the `config.yml` contents, running the tunnel **on demand, in the
+background, or as a boot service (systemd)**, an optional backend systemd unit, and the fee/pin tier -
+is in **[infra/HOSTING.md](infra/HOSTING.md)**. Free Cloudflare edge hardening (rate limiting, bots,
+DDoS): **[infra/CLOUDFLARE-HARDENING.md](infra/CLOUDFLARE-HARDENING.md)**.
 
 ## Architecture
 - **On-chain:** transaction metadata under label 1719 (no smart contract). Message chunked to 64-byte
