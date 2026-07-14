@@ -87,13 +87,18 @@ term + menu path), and **what to set**.
     `Hostname equals wall.arturwieczorek.com` **AND** `URI Path starts with /api/`
     (there is a simple "field / operator / value" builder - pick `Hostname`, `equals`,
     `wall.arturwieczorek.com`; then `+ And`, pick `URI Path`, `starts with`, `/api/`).
-  - **When rate exceeds:** `60` requests per `1 minute`, counted **per client IP** (the "characteristics"
-    / "counting" option - choose IP if offered).
-  - **Then:** **Block** for `10 minutes` (or "Managed Challenge" if you prefer to challenge rather than
-    hard-block).
-  - **Deploy.**
-- **Note:** the free plan allows **one** rate-limiting rule with basic options - which is exactly
-  enough here. 60/min is generous (normal use is a few requests); tighten later if you see abuse.
+  - **With the same characteristics:** `IP` (count per visitor IP).
+  - **When rate exceeds:** `20` requests per `10 seconds`.
+  - **Then:** **Block** for a **Duration** of `10 seconds`.
+  - **Status:** Active. **Deploy.**
+- **Free-plan note (important):** on the **free plan** the **Period is fixed at 10 seconds** and the
+  block **Duration is also 10 seconds** - the dropdowns will only offer those. That is normal, not a
+  bug; longer windows/blocks are paid features. `20 requests / 10 seconds per IP` is generous for real
+  use (a page load is ~3 requests) yet still stops a hammering script; raise to ~30-40 if you ever see
+  real visitors blocked. The free plan allows **one** rate-limiting rule - exactly enough here.
+- **Scope tip:** matching only `URI Path starts with /api/` is fine if `wall.arturwieczorek.com` is the
+  only thing on your domain serving `/api/`. To be strict, add `Hostname equals
+  wall.arturwieczorek.com` to the expression as well.
 
 ## 4. Security Level - challenge known-bad IPs
 
