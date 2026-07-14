@@ -7,6 +7,7 @@ import {
   shortenAddress,
   type Post,
 } from "./lib";
+import { CopyButton } from "./CopyButton";
 
 // Presentational feed: given the posts, render them (or a friendly empty state). Kept free of hooks,
 // fetch, and window access so it is trivial to unit-test with React Testing Library.
@@ -102,7 +103,8 @@ export function FeedList({
                   style={{ fontSize: 12 }}
                 >
                   view tx
-                </a>
+                </a>{" "}
+                <CopyButton value={p.txHash} label="copy tx" title="Copy the transaction hash" />
               </>
             )}
           </div>
