@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Memory Wall">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#0ea5a4"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="58" height="58" rx="14" fill="url(#g)"/>
+  <!-- a message on the wall: a speech bubble -->
+  <path d="M15 19 h34 a4 4 0 0 1 4 4 v16 a4 4 0 0 1 -4 4 H31 l-9 8 v-8 h-7 a4 4 0 0 1 -4 -4 V23 a4 4 0 0 1 4 -4 z"
+        fill="#ffffff"/>
+  <path d="M20 27 h24 M20 32 h24 M20 37 h15" fill="none" stroke="#4f46e5" stroke-width="2.6"
+        stroke-linecap="round"/>
+</svg>

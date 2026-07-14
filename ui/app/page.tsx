@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   adaToLovelace,
   byteCountColor,
@@ -23,6 +23,14 @@ type Health = "checking" | "online" | "offline";
 
 const PAGE_SIZE = 20; // posts fetched per "page"; a full page implies there may be more
 
+// UI accent swatches (global theme accent - separate from the per-post pin colour palette).
+const ACCENTS = [
+  { name: "green", hex: "#7ee787", rgb: "126, 231, 135" },
+  { name: "yellow", hex: "#d8a657", rgb: "216, 166, 87" },
+  { name: "blue", hex: "#4d9fff", rgb: "77, 159, 255" },
+  { name: "pink", hex: "#ff6ac1", rgb: "255, 106, 193" },
+];
+
 // Runtime config (from public/config.js) - set after deploy, no rebuild needed.
 const cfg = () => (typeof window !== "undefined" ? (window as unknown as Record<string, string>) : {});
 const apiBase = (): string => cfg().__WALL_API__ || ""; // "" = same-origin (dev proxy)
@@ -38,6 +46,7 @@ export default function Home() {
   const [health, setHealth] = useState<Health>("checking");
   const [bfKey, setBfKey] = useState("");
   const [theme, setTheme] = useState<Theme>("light");
+  const [accent, setAccent] = useState("#7ee787");
   const [query, setQuery] = useState("");
   const [config, setConfig] = useState<WallConfig | null>(null);
   const [tipAda, setTipAda] = useState("");
@@ -141,6 +150,8 @@ export default function Home() {
     const applied = document.documentElement.getAttribute("data-theme");
     const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
     setTheme(resolveInitialTheme(applied ?? localStorage.getItem("wall-theme"), prefersDark));
+    const savedAccent = localStorage.getItem("wall-accent"); // "#hex|r, g, b"
+    if (savedAccent) setAccent(savedAccent.split("|")[0]);
 
     const cardano = (window as unknown as { cardano?: Record<string, { enable?: unknown }> }).cardano ?? {};
     setWallets(Object.keys(cardano).filter((k) => typeof cardano[k]?.enable === "function"));
@@ -159,6 +170,18 @@ export default function Home() {
       localStorage.setItem("wall-theme", t);
     } catch {
       /* ignore storage errors (private mode) */
+    }
+  }
+
+  function pickAccent(hex: string, rgb: string) {
+    const root = document.documentElement;
+    root.style.setProperty("--accent", hex);
+    root.style.setProperty("--accent-rgb", rgb);
+    setAccent(hex);
+    try {
+      localStorage.setItem("wall-accent", hex + "|" + rgb);
+    } catch {
+      /* ignore storage errors */
     }
   }
 
@@ -230,14 +253,36 @@ export default function Home() {
 
   return (
     <main>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-        <h1 style={{ marginRight: "auto" }}>Memory Wall</h1>
-        <span style={{ fontSize: 12, color: "var(--muted)" }}>network: {network()}</span>
-        <button onClick={toggleTheme} aria-label="Toggle dark mode" style={{ fontSize: 12 }}>
-          {theme === "dark" ? "Light mode" : "Dark mode"}
+      <div id="controls">
+        <div id="accent" role="group" aria-label="Accent colour">
+          {ACCENTS.map((a) => (
+            <button
+              key={a.hex}
+              className="sw"
+              type="button"
+              title={a.name}
+              aria-label={`${a.name} accent`}
+              aria-pressed={accent === a.hex}
+              style={{ ["--sw"]: a.hex } as CSSProperties}
+              onClick={() => pickAccent(a.hex, a.rgb)}
+            />
+          ))}
+        </div>
+        <button id="theme" type="button" aria-label="Toggle dark mode" title="Toggle dark / light mode" onClick={toggleTheme}>
+          <svg className="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+          </svg>
+          <svg className="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+          </svg>
         </button>
       </div>
-      <p>Post a permanent message to Cardano. Your wallet signs; the message lives on-chain forever.</p>
+      <h1>Memory Wall</h1>
+      <p style={{ marginTop: 0 }}>
+        Post a permanent message to Cardano. Your wallet signs; the message lives on-chain forever.{" "}
+        <span style={{ color: "var(--muted)", fontSize: 13 }}>(network: {network()})</span>
+      </p>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "8px 0" }}>
         <span style={{ width: 10, height: 10, borderRadius: "50%", background: dotColor, display: "inline-block" }} />
