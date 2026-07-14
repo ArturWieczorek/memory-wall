@@ -3,7 +3,7 @@
 The single canonical list of everything proposed for the wall: what is planned, what is being built,
 what shipped, and what was deliberately left out (with the reason). Updated as work lands.
 
-> This supersedes the scattered "optional/next steps" notes. `PROGRESS.md` points here.
+> This supersedes the scattered "optional/next steps" notes. `AGENT.md` points here.
 > Every feature (or coherent set) gets its own chapter under `chapters/NN-title/README.md` - a
 > beginner tutorial (concept + analogy -> what we build -> tests first -> step by step -> pitfalls ->
 > glossary) - and tests (JUnit for the backend, Vitest + React Testing Library for the UI).

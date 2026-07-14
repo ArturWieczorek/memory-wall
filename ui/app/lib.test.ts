@@ -58,13 +58,17 @@ describe("byteCountColor", () => {
 describe("explorerTxUrl", () => {
   const hash = "abc123";
   it("uses the preprod host by default and for preprod", () => {
-    expect(explorerTxUrl("preprod", hash)).toBe(`https://preprod.cardanoscan.io/transaction/${hash}`);
+    expect(explorerTxUrl("preprod", hash)).toBe(
+      `https://preprod.cardanoscan.io/transaction/${hash}`,
+    );
     expect(explorerTxUrl("something-unknown", hash)).toBe(
       `https://preprod.cardanoscan.io/transaction/${hash}`,
     );
   });
   it("uses preview and mainnet hosts", () => {
-    expect(explorerTxUrl("preview", hash)).toBe(`https://preview.cardanoscan.io/transaction/${hash}`);
+    expect(explorerTxUrl("preview", hash)).toBe(
+      `https://preview.cardanoscan.io/transaction/${hash}`,
+    );
     expect(explorerTxUrl("mainnet", hash)).toBe(`https://cardanoscan.io/transaction/${hash}`);
   });
 });

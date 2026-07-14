@@ -17,6 +17,26 @@ This is also a step-by-step, test-driven **course**: each chapter under `chapter
 builds one piece, and each is one git commit + tag (`ch00` ... `ch15`). Start at
 `chapters/00-orientation/README.md`.
 
+## Contents
+- [What it is (in one picture)](#what-it-is-in-one-picture)
+- [The open format (label 1719)](#the-open-format-label-1719)
+- [Try it right now](#try-it-right-now)
+- [Post without this app](#post-without-this-app-the-format-is-open)
+- [Run it locally](#run-it-locally-build-from-source)
+- [Host it (backend + tunnel)](#host-it-backend--tunnel)
+- [Configuration](#configuration)
+- [Architecture](#architecture)
+- [Sample feed response](#sample-feed-response)
+- [Going to mainnet](#going-to-mainnet)
+- [What the wall guarantees (and what it does not)](#what-the-wall-guarantees-and-what-it-does-not)
+- [Troubleshooting](#troubleshooting)
+- [The course](#the-course)
+- [Releases and versioning](#releases-and-versioning)
+- [Tech stack](#tech-stack)
+- [Repo layout](#repo-layout)
+- [Contributing and security](#contributing-and-security)
+- [License](#license)
+
 ---
 
 ## What it is (in one picture)
@@ -123,6 +143,32 @@ background, or as a boot service (systemd)**, an optional backend systemd unit, 
 is in **[infra/HOSTING.md](infra/HOSTING.md)**. Free Cloudflare edge hardening (rate limiting, bots,
 DDoS): **[infra/CLOUDFLARE-HARDENING.md](infra/CLOUDFLARE-HARDENING.md)**.
 
+## Configuration
+
+Everything is read from the environment with a safe default, so the backend runs with no config at
+all (against a local Yaci DevKit). Override any of these via env vars; the source of truth is
+`src/main/resources/application.yml`.
+
+| Env var | Default | What it does |
+|---------|---------|--------------|
+| `WALL_BACKEND_URL` | `http://localhost:8080/api/v1/` | Blockfrost-compatible provider base URL (e.g. a preprod Blockfrost URL). |
+| `WALL_BACKEND_PROJECT_ID` | `wall` | Provider project id / API key. **SECRET - env only, never commit.** `wall` works for local Yaci; set your real key for hosted Blockfrost. |
+| `WALL_CORS_ORIGINS` | `*` | Comma-separated browser origins allowed to call the API (the hosted UI). `*` = any (safe here: no credentials). |
+| `WALL_RATE_LIMIT_ENABLED` | `true` | Turn the per-IP rate limit on/off. |
+| `WALL_RATE_LIMIT_RPM` | `20` | Allowed API requests per client IP per minute. |
+| `WALL_CLIENT_IP_HEADER` | (blank) | Trusted proxy header carrying the real client IP (e.g. `CF-Connecting-IP` behind Cloudflare). Blank = socket address. Do NOT set to `X-Forwarded-For` (spoofable). |
+| `WALL_FEE_ADDRESS` | (blank) | Operator address a post tips. Blank = fee/pin tier OFF (posting is free, the default). Must differ from posters' wallets. |
+| `WALL_MIN_FEE_LOVELACE` | `0` | Minimum tip (lovelace) required to post when the fee tier is on. |
+| `WALL_PIN_FEE_LOVELACE` | `0` | Tip (lovelace) at/above which a post is pinned (verified on-chain). |
+| `WALL_MAX_PINNED` | `3` | How many posts may be pinned at once (highest tips win); `<=0` = unlimited. |
+| `WALL_PIN_DURATION_SECONDS` | `604800` | How long a pin lasts from its timestamp (default 7 days); `<=0` = never expires. |
+| `WALL_BLOCKLIST` | (blank) | Comma-separated terms; a post whose author/message contains one is hidden from this feed (display-side only). |
+| `WALL_BLOCKED_TX_HASHES` | (blank) | Comma-separated tx hashes to hide exactly (display-side only). |
+| `WALL_INDEX_DB_PATH` | (blank) | Optional SQLite file to persist the full-history index. Blank = in-memory only (re-ingests on restart). |
+| `WALL_INDEX_REFRESH_MS` | `60000` | How often the index refreshes from the chain (ms). |
+| `WALL_PORT` | `8090` | Backend HTTP port. |
+| `WALL_BIND` | `127.0.0.1` | Bind address. Localhost = reachable only via the tunnel; set `0.0.0.0` only for deliberate direct LAN access. |
+
 ## Architecture
 - **On-chain:** transaction metadata under label 1719 (no smart contract). Message chunked to 64-byte
   values; optional pin colour in `c`.
@@ -132,6 +178,29 @@ DDoS): **[infra/CLOUDFLARE-HARDENING.md](infra/CLOUDFLARE-HARDENING.md)**.
   `GET /api/config`.
 - **UI** (`ui/`): Next.js static export + a raw CIP-30 wallet connection; the wallet signs/submits.
 - **Provider:** a Blockfrost-compatible backend (preprod by default; Yaci DevKit locally).
+
+## Sample feed response
+
+`GET /api/feed?limit=20&page=1` returns a JSON array, newest first (active pins first). Each post:
+
+```json
+[
+  {
+    "author": "alice",
+    "message": "gm from the wall",
+    "timestamp": "2026-07-14T09:30:00Z",
+    "txHash": "0d6c517a1346...",
+    "address": "addr_test1qrexrc3...",
+    "tipLovelace": 5000000,
+    "pinned": true,
+    "color": "sky"
+  }
+]
+```
+
+`author` is a claim (free text); `address` is the verified signer read from the chain. `tipLovelace`
+and `pinned` are 0/false unless the fee tier is on; `color` is blank unless the payer chose a pin
+colour. `GET /api/search?q=...` returns the same shape across all history.
 
 ## Going to mainnet
 Point the backend at a mainnet provider (`WALL_BACKEND_URL` + a mainnet `WALL_BACKEND_PROJECT_ID`) and
@@ -155,6 +224,21 @@ Does NOT:
   restart (a persistent store is still on `docs/BACKLOG.md`); while offline, the UI's search falls
   back to just the loaded window.
 - **Post only what you are comfortable being public and permanent.**
+
+## Troubleshooting
+
+- **Status light is red / "server offline".** The backend is not reachable. Check it is running
+  (`curl 127.0.0.1:8090/api/health`), that `ui/public/config.js` `__WALL_API__` points at your live
+  tunnel URL, and that `WALL_CORS_ORIGINS` includes the UI's origin. You can still read the feed via
+  the "Read posts directly from the chain" fallback (paste a free Blockfrost preprod key).
+- **"Build failed" (HTTP 502) when posting.** The tx could not be built. Usual causes: the wallet has
+  too little ADA to cover the post + fee; or the fee tier is on with an invalid `WALL_FEE_ADDRESS`
+  (the backend refuses to start on a bad address, so re-check it); the response includes the
+  provider's reason.
+- **Every post shows up as PINNED.** Your `WALL_FEE_ADDRESS` is also one of the posting wallets, so
+  its own change output is counted as a tip. Use a fee address that is NOT a poster wallet.
+- **The UI still points at the old backend after you changed the tunnel.** `config.js` is cached by
+  the browser; hard-refresh (Ctrl+Shift+R). A stable named tunnel avoids this.
 
 ## The course
 
@@ -181,21 +265,34 @@ Each chapter is a self-contained lesson under `chapters/` (one git tag each, `ch
 
 Roadmap and out-of-scope decisions (with reasons): `docs/BACKLOG.md`.
 
+## Releases and versioning
+Two independent tracks:
+- **Semantic-version GitHub Releases** mark shippable states - **`v1.0.0`** is the first (the
+  feature-complete wall, chapters 00-15). See [CHANGELOG.md](CHANGELOG.md) and the repo's Releases.
+- **Per-chapter teaching tags** `ch00 ... ch15` mark each lesson's commit, so you can check out the
+  repo at any point in the course.
+
 ## Tech stack
-- **Backend:** Java 21, Gradle, Spring Boot, bloxbean cardano-client-lib (+ backend-blockfrost),
-  JUnit 5 / AssertJ, Spotless.
+- **Backend:** Java 21, Gradle, Spring Boot 3.5.16, bloxbean cardano-client-lib (+ backend-blockfrost),
+  JUnit 5 / AssertJ, Spotless, JaCoCo.
 - **UI (`ui/`):** Next.js + TypeScript + React, raw CIP-30 wallet API (no Cardano JS lib - the backend
-  builds the tx); Vitest + React Testing Library for tests.
+  builds the tx); Vitest + React Testing Library for tests; ESLint + Prettier.
 
 ## Repo layout
 ```
 src/main/java/org/wall/   backend: WallPost, Wall (metadata + tx build), Spring API, feed reader
 ui/                       Next.js + CIP-30 UI (static-exported to GitHub Pages)
 chapters/NN-title/        the course, one chapter per step
-infra/                    hosting runbook (HOSTING.md), run-backend.sh, AGENT-HANDOFF.md
-docs/                     BACKLOG.md (roadmap) + future-images.md (design notes)
-CLAUDE.md / PROGRESS.md    project vision/decisions + living status log
+infra/                    hosting runbook (HOSTING.md), CLOUDFLARE-HARDENING.md, run-backend.sh
+docs/                     BACKLOG.md (roadmap) + future-images.md + image threat analysis
+AGENT.md                  single source of project context, decisions, status, session log
 ```
+
+## Contributing and security
+Contributions welcome - see [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). To report a vulnerability, follow
+[SECURITY.md](SECURITY.md) (please do not open a public issue). Full project context for contributors
+and agents lives in [AGENT.md](AGENT.md).
 
 ## License
 

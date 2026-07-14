@@ -1,6 +1,7 @@
 plugins {
     `java-library`
     application // `./gradlew run` starts the Spring Boot backend
+    jacoco // test coverage report (./gradlew test jacocoTestReport)
     id("com.diffplug.spotless") version "6.25.0"
 }
 
@@ -34,14 +35,26 @@ tasks.withType<JavaCompile>().configureEach { options.compilerArgs.add("-paramet
 tasks.test {
     useJUnitPlatform { excludeTags("integration") }
     testLogging { events("passed", "skipped", "failed") }
+    finalizedBy(tasks.jacocoTestReport) // coverage report always follows the unit tests
 }
 
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true) // machine-readable (CI / coverage services)
+        html.required.set(true) // build/reports/jacoco/test/html/index.html
+    }
+}
+
+// Live-chain tests (@Tag("integration")) need a devnet/testnet; they self-skip without
+// WALL_IT_BACKEND_URL, so this task is safe to run anywhere - it just reports them skipped.
 tasks.register<Test>("integrationTest") {
-    description = "Runs tests tagged 'integration' (need a live devnet/testnet)."
+    description = "Runs tests tagged 'integration' (need a live devnet/testnet; self-skip otherwise)."
     group = "verification"
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
     useJUnitPlatform { includeTags("integration") }
+    testLogging { events("passed", "skipped", "failed") }
 }
 
 spotless {

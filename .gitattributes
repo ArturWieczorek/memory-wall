@@ -1,0 +1,18 @@
+# Normalize line endings to LF for all text (aligns with the ASCII-only house rule).
+* text=auto eol=lf
+
+# Windows scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# The Gradle wrapper script must stay LF.
+gradlew text eol=lf
+
+# Binary assets - never touch line endings.
+*.jar binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.db binary
+*.sqlite binary

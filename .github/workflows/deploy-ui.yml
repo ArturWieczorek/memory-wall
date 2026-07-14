@@ -1,7 +1,7 @@
 # Build the Memory Wall UI as a static site and publish it to GitHub Pages.
 #
 # What it does NOT do: it does not deploy the Java backend. The backend runs on your own box behind a
-# tunnel (see infra/AGENT-HANDOFF.md); the browser calls it directly via window.__WALL_API__ set in
+# tunnel (see AGENT.md); the browser calls it directly via window.__WALL_API__ set in
 # ui/public/config.js AFTER deploy (no rebuild needed).
 #
 # The site is published under /<repo> (a GitHub "project" Pages site), so we build with

@@ -2,7 +2,8 @@ import "./globals.css";
 import type { ReactNode } from "react";
 import Script from "next/script";
 
-const description = "A public, permanent message wall on Cardano - post a short message that lives on-chain forever, shown as a live feed.";
+const description =
+  "A public, permanent message wall on Cardano - post a short message that lives on-chain forever, shown as a live feed.";
 
 export const metadata = {
   title: "Memory Wall",

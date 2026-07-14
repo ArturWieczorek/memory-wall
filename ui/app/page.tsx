@@ -32,7 +32,8 @@ const ACCENTS = [
 ];
 
 // Runtime config (from public/config.js) - set after deploy, no rebuild needed.
-const cfg = () => (typeof window !== "undefined" ? (window as unknown as Record<string, string>) : {});
+const cfg = () =>
+  typeof window !== "undefined" ? (window as unknown as Record<string, string>) : {};
 const apiBase = (): string => cfg().__WALL_API__ || ""; // "" = same-origin (dev proxy)
 const network = (): string => cfg().__WALL_NETWORK__ || "preprod";
 
@@ -176,7 +177,8 @@ export default function Home() {
     const savedAccent = localStorage.getItem("wall-accent"); // "#hex|r, g, b"
     if (savedAccent) setAccent(savedAccent.split("|")[0]);
 
-    const cardano = (window as unknown as { cardano?: Record<string, { enable?: unknown }> }).cardano ?? {};
+    const cardano =
+      (window as unknown as { cardano?: Record<string, { enable?: unknown }> }).cardano ?? {};
     setWallets(Object.keys(cardano).filter((k) => typeof cardano[k]?.enable === "function"));
     void loadConfig();
     void loadFeed();
@@ -227,7 +229,9 @@ export default function Home() {
         setStatus("The wall is offline right now - posting is unavailable.");
         return;
       }
-      const cardano = (window as unknown as { cardano?: Record<string, { enable: () => Promise<any> }> }).cardano;
+      const cardano = (
+        window as unknown as { cardano?: Record<string, { enable: () => Promise<any> }> }
+      ).cardano;
       if (!wallet || !cardano?.[wallet]) {
         setStatus("Pick a wallet first.");
         return;
@@ -309,12 +313,36 @@ export default function Home() {
             />
           ))}
         </div>
-        <button id="theme" type="button" aria-label="Toggle dark mode" title="Toggle dark / light mode" onClick={toggleTheme}>
-          <svg className="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <button
+          id="theme"
+          type="button"
+          aria-label="Toggle dark mode"
+          title="Toggle dark / light mode"
+          onClick={toggleTheme}
+        >
+          <svg
+            className="sun"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="4" />
             <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
           </svg>
-          <svg className="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg
+            className="moon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
           </svg>
         </button>
@@ -326,8 +354,18 @@ export default function Home() {
       </p>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "8px 0" }}>
-        <span style={{ width: 10, height: 10, borderRadius: "50%", background: dotColor, display: "inline-block" }} />
-        <span style={{ fontSize: 13 }}>wall server: {health === "checking" ? "checking..." : health}</span>
+        <span
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            background: dotColor,
+            display: "inline-block",
+          }}
+        />
+        <span style={{ fontSize: 13 }}>
+          wall server: {health === "checking" ? "checking..." : health}
+        </span>
         <button onClick={() => void loadFeed()} style={{ marginLeft: "auto", fontSize: 12 }}>
           Refresh
         </button>
@@ -357,12 +395,32 @@ export default function Home() {
             </option>
           ))}
         </select>
-        <input placeholder="name (optional)" value={author} onChange={(e) => setAuthor(e.target.value)} />
-        <div style={{ fontSize: 12, color: byteCountColor(authorBytes, MAX_AUTHOR_BYTES), textAlign: "right" }}>
+        <input
+          placeholder="name (optional)"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+        />
+        <div
+          style={{
+            fontSize: 12,
+            color: byteCountColor(authorBytes, MAX_AUTHOR_BYTES),
+            textAlign: "right",
+          }}
+        >
           {authorBytes} / {MAX_AUTHOR_BYTES} bytes{authorOver ? " - name too long" : ""}
         </div>
-        <textarea placeholder="your message" value={message} onChange={(e) => setMessage(e.target.value)} />
-        <div style={{ fontSize: 12, color: byteCountColor(bytes, MAX_MESSAGE_BYTES), textAlign: "right" }}>
+        <textarea
+          placeholder="your message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+        <div
+          style={{
+            fontSize: 12,
+            color: byteCountColor(bytes, MAX_MESSAGE_BYTES),
+            textAlign: "right",
+          }}
+        >
           {bytes} / {MAX_MESSAGE_BYTES} bytes{overLimit ? " - too long" : ""}
         </div>
 
@@ -395,10 +453,10 @@ export default function Home() {
             <div style={{ fontSize: 12, color: belowMin ? "var(--danger)" : "var(--muted)" }}>
               <strong>Pinning rules:</strong> posting costs at least{" "}
               {lovelaceToAda(config.minFeeLovelace)} ADA (a tip to the wall). Tip{" "}
-              {lovelaceToAda(config.pinFeeLovelace)} ADA or more to <strong>pin</strong> your post to
-              the top. At most {config.maxPinned} posts are pinned at once - the highest tips win the
-              slots, a pin lasts up to {pinDays} day{pinDays === 1 ? "" : "s"}, and a bigger tip can
-              bump a smaller one. The tip is paid on-chain to the wall.
+              {lovelaceToAda(config.pinFeeLovelace)} ADA or more to <strong>pin</strong> your post
+              to the top. At most {config.maxPinned} posts are pinned at once - the highest tips win
+              the slots, a pin lasts up to {pinDays} day{pinDays === 1 ? "" : "s"}, and a bigger tip
+              can bump a smaller one. The tip is paid on-chain to the wall.
               {belowMin ? " (Your tip is below the minimum.)" : ""}
             </div>
             {willPin && config.palette.length > 0 && (
@@ -441,8 +499,8 @@ export default function Home() {
             Read posts directly from the chain (optional Blockfrost key)
           </summary>
           <p style={{ fontSize: 13, opacity: 0.8 }}>
-            Used automatically when the server is offline. Your key is your own, read-only, and never
-            sent anywhere except Blockfrost from your browser. Network: {network()}.
+            Used automatically when the server is offline. Your key is your own, read-only, and
+            never sent anywhere except Blockfrost from your browser. Network: {network()}.
           </p>
           <div style={{ display: "flex", gap: 8 }}>
             <input

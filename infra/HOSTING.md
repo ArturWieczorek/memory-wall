@@ -4,7 +4,7 @@ A step-by-step guide to make the deployed wall fully functional: run the Java ba
 box and expose it to the internet through a tunnel. The UI is already hosted (GitHub Pages); this is
 the backend half.
 
-> Agents: the current readiness state, decisions, and key files live in `AGENT-HANDOFF.md`. This file
+> Agents: the current readiness state, decisions, and key files live in `../AGENT.md`. This file
 > is the human runbook. The teaching version (networking concepts, analogies) is
 > `../chapters/06-serve-it-from-home/README.md`.
 

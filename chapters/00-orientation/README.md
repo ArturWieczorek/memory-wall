@@ -39,8 +39,8 @@ to show everyone.
 
 ## 5. How this course works (same as the rest of the portfolio)
 One chapter = one git commit + tag. Each chapter README is concept (+ analogy) -> what we build ->
-tests we write FIRST -> steps -> what to notice -> glossary. TDD; keep it green; update PROGRESS.md;
-plain ASCII; no Co-Authored-By trailer. (Counts like "N tests" are true at that chapter's tag.)
+tests we write FIRST -> steps -> what to notice -> glossary. TDD; keep it green; update the session
+log in AGENT.md; plain ASCII; no Co-Authored-By trailer. (Counts like "N tests" are true at that chapter's tag.)
 
 ## 6. What is next
 Chapter 01: posting a message - including the one real constraint, the 64-byte metadata limit, and
