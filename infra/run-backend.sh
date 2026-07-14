@@ -49,6 +49,21 @@ echo "  provider url : ${WALL_BACKEND_URL}"
 echo "  project id   : set (hidden)"
 echo "  cors origins : ${WALL_CORS_ORIGINS}"
 echo "  bind : port  : ${WALL_BIND:-127.0.0.1} : ${WALL_PORT:-8090}  (localhost only; expose via a tunnel)"
+if [ -n "${WALL_FEE_ADDRESS:-}" ]; then
+  echo "  fee tier     : ON"
+  echo "    fee address : ${WALL_FEE_ADDRESS}"
+  echo "    min to post : ${WALL_MIN_FEE_LOVELACE:-0} lovelace ($(( ${WALL_MIN_FEE_LOVELACE:-0} / 1000000 )) ADA)"
+  echo "    pin at/above: ${WALL_PIN_FEE_LOVELACE:-0} lovelace ($(( ${WALL_PIN_FEE_LOVELACE:-0} / 1000000 )) ADA)"
+  echo "    pins        : ${WALL_MAX_PINNED:-3} slots, ${WALL_PIN_DURATION_SECONDS:-604800}s window"
+  echo "    NOTE: the fee address should NOT be a wallet you post from (self-tips net to 0);"
+  echo "          min/pin fees must be >= ~1 ADA (a tx output cannot be below the min-UTxO)."
+else
+  echo "  fee tier     : off (free posting)"
+  echo "                 to enable: set WALL_FEE_ADDRESS + WALL_MIN_FEE_LOVELACE + WALL_PIN_FEE_LOVELACE"
+fi
+if [ -n "${WALL_CLIENT_IP_HEADER:-}" ]; then
+  echo "  client-ip hdr: ${WALL_CLIENT_IP_HEADER} (per-visitor rate limit behind a trusted proxy)"
+fi
 echo "  health check : curl http://127.0.0.1:${WALL_PORT:-8090}/api/health"
 echo
 exec ./gradlew run
