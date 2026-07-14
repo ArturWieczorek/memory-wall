@@ -97,8 +97,10 @@ term + menu path), and **what to set**.
   use (a page load is ~3 requests) yet still stops a hammering script; raise to ~30-40 if you ever see
   real visitors blocked. The free plan allows **one** rate-limiting rule - exactly enough here.
 - **Scope tip:** matching only `URI Path starts with /api/` is fine if `wall.arturwieczorek.com` is the
-  only thing on your domain serving `/api/`. To be strict, add `Hostname equals
-  wall.arturwieczorek.com` to the expression as well.
+  only thing on your domain serving `/api/` (usually the case). To be strict you *can* also require the
+  host, but the **free-plan builder often has no "Hostname" field** in the dropdown. If so, either type
+  it in the raw expression box - `(http.host eq "wall.arturwieczorek.com" and
+  starts_with(http.request.uri.path, "/api/"))` - or just keep the path-only rule; both are fine here.
 
 ## 4. Security Level - challenge known-bad IPs
 
