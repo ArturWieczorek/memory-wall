@@ -73,29 +73,109 @@ Defaults the helper applies (override by exporting the variable before running):
 `https://arturwieczorek.github.io`, not `.../memory-wall`). Adding the path is the #1 cause of
 "blocked by CORS" in the browser.
 
-## Step 4 - expose it with a tunnel
-No port-forwarding, no public IP. Pick one:
+## Step 4 - expose the backend with a tunnel
+No port-forwarding, no public IP. Three options, simplest to most durable.
 
-**Option A - quickest test (Cloudflare quick tunnel; no account, no login):**
+### Option A - throwaway quick tunnel (fastest test; no account)
 ```bash
-# install cloudflared once, then:
-cloudflared tunnel --url http://localhost:8090
+cloudflared tunnel --url http://localhost:8090      # install cloudflared once first
 ```
-Prints a throwaway `https://<random>.trycloudflare.com`. Great for a first end-to-end test; the URL
-changes every run.
+Prints a random `https://<...>.trycloudflare.com`. Good for a first end-to-end test, but the URL
+**changes every run**, so you would re-point `config.js` each time. Not for long-term use.
 
-**Option B - stable URL (Tailscale Funnel; the project's chosen path):**
+### Option B - Cloudflare NAMED tunnel (stable custom URL - recommended if you have a Cloudflare domain)
+A permanent URL on your own domain (e.g. `https://wall.yourdomain.com`), no churn. One-time setup:
 ```bash
-curl -fsSL https://tailscale.com/install.sh | sh    # install (one-time)
-sudo tailscale up                                    # opens a browser to log in
-tailscale funnel 8090                                # serve port 8090 publicly over HTTPS
+# 1. authorize (opens a browser; sign in to Cloudflare, pick your zone):
+cloudflared tunnel login
+# 2. create a named tunnel (note the ID + credentials path it prints):
+cloudflared tunnel create memory-wall
+# 3. point a hostname at it (adds a proxied CNAME in your Cloudflare DNS):
+cloudflared tunnel route dns memory-wall wall.yourdomain.com
 ```
-Gives a stable `https://<yourbox>.<tailnet>.ts.net`. If Funnel complains, Tailscale prints a link to
-enable **HTTPS certificates + Funnel** in your admin console (a one-time toggle).
+Then write `~/.cloudflared/config.yml`:
+```yaml
+tunnel: <TUNNEL_ID>                                  # from step 2
+credentials-file: /home/<you>/.cloudflared/<TUNNEL_ID>.json
+ingress:
+  - hostname: wall.yourdomain.com
+    service: http://localhost:8090
+  - service: http_status:404
+```
+Now run it - pick how persistent you need it (next section).
 
-Verify the tunnel from anywhere:
+### Option C - Tailscale Funnel (stable URL without a domain)
 ```bash
-curl https://<your-tunnel-url>/api/health           # -> {"status":"ok"}
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up                                    # login is via an identity provider (Google/GitHub/...);
+tailscale funnel --bg 8090                           # there is NO email/password sign-in
+```
+Gives `https://<box>.<tailnet>.ts.net`.
+
+## Step 4b - running the tunnel: on-demand -> background -> boot service
+Commands below use the Cloudflare **named** tunnel from Option B; adapt for the others.
+
+1. **On demand (foreground)** - Ctrl+C to stop. Good while testing:
+   ```bash
+   cloudflared tunnel run memory-wall
+   ```
+2. **Background** (survives closing the terminal, but NOT a reboot):
+   ```bash
+   nohup cloudflared tunnel run memory-wall >/tmp/cloudflared.log 2>&1 &
+   ```
+3. **Auto-start on every boot (systemd - set-and-forget):**
+   ```bash
+   sudo cloudflared service install       # installs + starts a systemd service reading config.yml
+   sudo systemctl enable --now cloudflared
+   sudo systemctl status cloudflared      # should be "active (running)"
+   # logs: journalctl -u cloudflared -f
+   ```
+
+## Step 4c - keep the BACKEND running too (optional systemd user service)
+The tunnel only helps while the backend is up on :8090. To auto-start the backend without babysitting
+a terminal, add a systemd **user** service. Keep the Blockfrost key OUT of the unit - put it in a
+private env file.
+
+```bash
+# 1. secret env file (chmod 600; never commit): ~/.config/memory-wall/env
+mkdir -p ~/.config/memory-wall
+cat > ~/.config/memory-wall/env <<'EOF'
+WALL_BACKEND_PROJECT_ID=preprod...
+WALL_BACKEND_URL=https://cardano-preprod.blockfrost.io/api/v0/
+WALL_CORS_ORIGINS=https://arturwieczorek.github.io
+WALL_CLIENT_IP_HEADER=CF-Connecting-IP
+# optional fee tier:
+# WALL_FEE_ADDRESS=addr_test1...   WALL_MIN_FEE_LOVELACE=2000000   WALL_PIN_FEE_LOVELACE=5000000
+EOF
+chmod 600 ~/.config/memory-wall/env
+```
+Then `~/.config/systemd/user/memory-wall.service` (edit the two paths to your checkout):
+```ini
+[Unit]
+Description=Memory Wall backend
+After=network-online.target
+
+[Service]
+WorkingDirectory=/home/you/path/to/memory-wall
+EnvironmentFile=%h/.config/memory-wall/env
+ExecStart=/home/you/path/to/memory-wall/gradlew run
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+```
+Enable it:
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now memory-wall
+loginctl enable-linger "$USER"          # keep it running even when you are not logged in
+systemctl --user status memory-wall     # should be "active (running)"
+# logs: journalctl --user -u memory-wall -f
+```
+
+## Step 4d - verify the tunnel (any option)
+```bash
+curl https://wall.yourdomain.com/api/health         # -> {"status":"ok"}
 ```
 
 ## Step 5 - point the hosted UI at the tunnel
