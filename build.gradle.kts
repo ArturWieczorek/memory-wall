@@ -27,7 +27,7 @@ dependencies {
     implementation("com.bloxbean.cardano:cardano-client-backend-blockfrost:0.7.2")
 
     // Optional persistent index store (SQLite, single file). Inert unless wall.index.db-path is set.
-    implementation("org.xerial:sqlite-jdbc:3.47.1.0")
+    implementation("org.xerial:sqlite-jdbc:3.53.2.0")
 }
 
 tasks.withType<JavaCompile>().configureEach { options.compilerArgs.add("-parameters") }
