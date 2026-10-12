@@ -23,8 +23,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Cardano: build/submit transactions, read metadata, talk to a Blockfrost-compatible backend.
-    implementation("com.bloxbean.cardano:cardano-client-lib:0.7.2")
-    implementation("com.bloxbean.cardano:cardano-client-backend-blockfrost:0.7.2")
+    implementation("com.bloxbean.cardano:cardano-client-lib:0.7.3")
+    implementation("com.bloxbean.cardano:cardano-client-backend-blockfrost:0.7.3")
 
     // Optional persistent index store (SQLite, single file). Inert unless wall.index.db-path is set.
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")
